@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mi Launcher</string>
+    <!-- Nombre que aparece sobre el reloj -->
+    <string name="car_name">LANCER GLX</string>
+    <string name="kmh">km/h</string>
+    <string name="gps_searching">Buscando GPS…</string>
+    <string name="gps_ok">GPS conectado</string>
+    <string name="gps_no_permission">Toca para permitir la ubicación</string>
+    <string name="gps_unavailable">Esta radio no tiene GPS disponible</string>
+    <string name="music_nothing">Nada sonando</string>
+    <string name="music_hint_access">Toca aquí para mostrar la canción</string>
+    <string name="music_hint_open">Abre Spotify, YouTube Music o tu app de música</string>
+    <string name="music_access_missing">Tu radio no muestra ese ajuste. Los botones de música igual funcionan.</string>
+    <string name="all_apps">Todas las apps</string>
+    <string name="apps">Apps</string>
+    <string name="assign">Asignar</string>
+    <string name="pick_app_title">Elige la app para \"%1$s\"</string>
+    <string name="automatic">Automático (detectar solo)</string>
+    <string name="cannot_open">No se pudo abrir la app</string>
+    <string name="slot_hint">Mantén presionado un botón para cambiar su app</string>
+</resources>

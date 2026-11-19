@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta "Lancer GLX 2010 blanco":
+         rojo como la iluminación del tablero + blanco perla y plata por la carrocería.
+         Cambia estos colores para personalizar todo el launcher. -->
+    <color name="accent">#FFE8262B</color>       <!-- rojo tablero -->
+    <color name="accent_dark">#FF7A1216</color>
+    <color name="pearl">#FFF4F4F1</color>        <!-- blanco perla -->
+    <color name="silver">#FFB9BDC3</color>       <!-- plata -->
+    <color name="gauge_track">#FF2A2A30</color>
+    <color name="background">#FF0B0B0D</color>
+    <color name="card">#E6141418</color>
+    <color name="card_stroke">#40B9BDC3</color>  <!-- borde plateado suave -->
+    <color name="text_primary">#FFF4F4F1</color>
+    <color name="text_secondary">#FF9A9AA0</color>
+</resources>
