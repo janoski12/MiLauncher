@@ -20,7 +20,28 @@ Abre una terminal en esta carpeta, ejecuta `claude` y pégale esto:
 
 > Este es un proyecto Android (Kotlin, sin dependencias externas). Compílalo con `./gradlew assembleRelease` (en Windows `gradlew.bat assembleRelease`). Si falta `local.properties`, créalo con `sdk.dir` apuntando a mi Android SDK. Si hay errores de compilación, corrígelos sin cambiar el diseño ni las funciones. Al final dime la ruta del APK.
 
-El APK queda en `app/build/outputs/apk/release/app-release.apk`. Viene firmado con la llave de debug, así que se instala directo.
+El APK queda en `app/build/outputs/apk/release/app-release.apk`.
+
+### Firma del APK (hacer una sola vez)
+Android solo deja **actualizar** una app si el APK nuevo viene firmado con la **misma llave** que el instalado. Por eso el proyecto usa una llave propia en vez de la de debug, que es distinta en cada PC.
+
+1. Antes de compilar por primera vez, crea la llave:
+   `./gradlew crearLlave` (en Windows `gradlew.bat crearLlave`)
+2. Se crean dos archivos en esta carpeta: `milauncher.jks` y `keystore.properties`. **Respáldalos** (pendrive, nube). Si los pierdes o cambias de PC sin ellos, tendrás que desinstalar la app para instalar una versión nueva, y se pierde la configuración de los botones.
+3. Para compilar en otro PC, copia esos dos archivos a la carpeta del proyecto.
+
+No se suben a git (están en `.gitignore`). Si no existe `keystore.properties`, el APK se firma con la llave de debug de ese PC y Gradle muestra un aviso.
+
+**Si ya tienes instalada una versión firmada con la llave de debug**, tienes dos opciones:
+- **Desinstalarla** una vez e instalar la nueva (tendrás que volver a configurar los botones y permisos).
+- **Seguir usando esa llave**: en el PC donde compilaste esa versión, copia `debug.keystore` (está en `C:\Users\TU_USUARIO\.android\` o en `~/.android/`) a esta carpeta y crea `keystore.properties` a mano con:
+  ```
+  storeFile=debug.keystore
+  storePassword=android
+  keyAlias=androiddebugkey
+  keyPassword=android
+  ```
+  Así las actualizaciones se instalan encima sin desinstalar.
 
 ## 2. Instalar en la radio
 
@@ -74,7 +95,7 @@ Para cambiar el nombre sobre el reloj, edita `car_name` en `strings.xml`. Para c
 | Tamaños y distribución | `app/src/main/res/layout/activity_main.xml` |
 | Textos | `app/src/main/res/values/strings.xml` |
 
-Después de cada cambio, vuelve a compilar e instalar (si el APK tiene la misma firma, se actualiza sin perder la configuración).
+Después de cada cambio, vuelve a compilar e instalar. Mientras uses la misma llave (ver *Firma del APK*), se actualiza sin perder la configuración.
 
 ## Estructura
 ```

@@ -5,3 +5,8 @@ local.properties
 .idea/
 *.iml
 .DS_Store
+
+# Llave de firma (secreta): ver "Firma del APK" en el README
+keystore.properties
+*.jks
+*.keystore
