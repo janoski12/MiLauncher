@@ -79,6 +79,13 @@ dependencies {
 tasks.register("crearLlave") {
     group = "firma"
     description = "Crea la llave propia para firmar el APK (milauncher.jks + keystore.properties)."
+    doFirst {
+        // La llave se lee al iniciar Gradle: si se compila en la misma ejecución,
+        // el APK saldría firmado con la llave de debug.
+        if (gradle.startParameter.taskNames.any { !it.endsWith("crearLlave") }) {
+            throw GradleException("Ejecuta crearLlave solo, y después compila en otro comando.")
+        }
+    }
     doLast {
         val jks = rootProject.file("milauncher.jks")
         if (keystorePropsFile.exists() || jks.exists()) {
@@ -115,5 +122,6 @@ tasks.register("crearLlave") {
         )
         println("Llave creada: ${jks.absolutePath} y ${keystorePropsFile.absolutePath}")
         println("Respalda ambos archivos (por ejemplo en un pendrive o en tu nube).")
+        println("Ahora compila con: ./gradlew assembleRelease")
     }
 }
