@@ -36,7 +36,8 @@ El APK queda en `app/build/outputs/apk/release/app-release.apk`. Viene firmado c
 
 1. Presiona **Home**, elige **Mi Launcher** y toca **Siempre**.
    Si no aparece la pregunta: *Ajustes > Aplicaciones > Apps predeterminadas > App de inicio*.
-2. **Ubicación:** acepta el permiso para el velocímetro. Si lo rechazaste, toca el cuadro del reloj y se abre la ficha de la app para activarlo.
+2. **Ubicación:** acepta el permiso para el velocímetro y elige **ubicación precisa**. Con la "aproximada" Android no entrega la velocidad, así que el velocímetro se queda en "--" y aparece *"Toca y elige ubicación precisa"*.
+   Si rechazaste el permiso o elegiste la aproximada, toca el cuadro del reloj: vuelve a preguntar o, si Android ya no deja preguntar, abre la ficha de la app (*Permisos > Ubicación > Permitir* y activa *Usar ubicación precisa*).
 3. **Música:** toca la tarjeta de música y activa **Mi Launcher** en "Acceso a notificaciones". Es lo que permite ver la canción y la carátula.
    - En Android 13 o superior puede salir "Configuración restringida". Ve a *Ajustes > Apps > Mi Launcher*, toca el menú ⋮ > **Permitir configuración restringida** y vuelve a intentarlo.
    - Si tu radio no tiene ese ajuste, los botones de música funcionan igual. Solo no se verá el nombre de la canción.

@@ -186,6 +186,29 @@ class MainActivity : Activity() {
     private fun hasLocationPermission() =
         checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
+    /**
+     * Android 12+ deja elegir "ubicación aproximada". Con eso el sistema entrega posiciones
+     * borrosas y sin velocidad, así que el velocímetro no puede funcionar: hay que pedir la precisa.
+     */
+    private fun hasOnlyApproximateLocation() =
+        !hasLocationPermission() &&
+            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    /** Android ya no muestra la pregunta (se rechazó dos veces): solo se puede activar en Ajustes. */
+    private var locationBlocked: Boolean
+        get() = getSharedPreferences("general", Context.MODE_PRIVATE).getBoolean("location_blocked", false)
+        set(value) = getSharedPreferences("general", Context.MODE_PRIVATE).edit()
+            .putBoolean("location_blocked", value).apply()
+
+    /** En Android 12+ hay que pedir ambas: la precisa sola es rechazada por el sistema. */
+    private fun requestLocation() {
+        askedLocation = true
+        requestPermissions(
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            REQ_LOCATION
+        )
+    }
+
     @SuppressLint("MissingPermission")
     private fun startGps() {
         if (listeningGps) return
@@ -199,16 +222,16 @@ class MainActivity : Activity() {
         }
         if (!hasLocationPermission()) {
             gauge.setSpeed(null)
-            gpsStatus.setText(R.string.gps_no_permission)
-            if (!askedLocation) {
-                askedLocation = true
-                requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                    REQ_LOCATION
-                )
+            if (hasOnlyApproximateLocation()) {
+                // El usuario eligió "aproximada" a propósito: no se le insiste solo, se espera a que toque.
+                gpsStatus.setText(R.string.gps_approximate)
+                return
             }
+            gpsStatus.setText(R.string.gps_no_permission)
+            if (!askedLocation && !locationBlocked) requestLocation()
             return
         }
+        locationBlocked = false
         try {
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, locationListener, Looper.getMainLooper())
             listeningGps = true
@@ -245,21 +268,32 @@ class MainActivity : Activity() {
 
     private fun onInfoCardClicked() {
         if (hasLocationPermission()) return
-        if (askedLocation && !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            // El permiso quedó bloqueado: abrir la ficha de la app para activarlo a mano.
+        if (locationBlocked) openLocationSettings() else requestLocation()
+    }
+
+    /** Abre la ficha de la app para activar la ubicación (y "Usar ubicación precisa") a mano. */
+    private fun openLocationSettings() {
+        Toast.makeText(this, R.string.location_settings_hint, Toast.LENGTH_LONG).show()
+        try {
             startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
-        } else {
-            askedLocation = false
-            startGps()
+        } catch (e: Exception) {
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQ_LOCATION) startGps()
+        if (requestCode != REQ_LOCATION) return
+        // grantResults vacío = la pregunta se cerró sin respuesta (no cuenta como rechazo).
+        if (grantResults.isNotEmpty() && !hasLocationPermission() &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+        ) {
+            // Android ya no volverá a preguntar: el próximo toque abre Ajustes.
+            locationBlocked = true
+        }
+        startGps()
     }
 
     // =====================================================================
