@@ -4,9 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
@@ -17,12 +19,14 @@ import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -45,6 +49,26 @@ class MainActivity : Activity() {
     private var apps: List<AppEntry> = emptyList()
     private var slotsVersion = -1   // versión de Apps con la que se dibujó la fila de abajo
     private val handler = Handler(Looper.getMainLooper())
+
+    /** Deslizar hacia la izquierda (de derecha a izquierda) en cualquier parte abre el cajón de apps. */
+    private val swipe by lazy { SwipeDetector(this, toRight = false) { openAppsDrawer() } }
+
+    // ---------- Logo al encender ----------
+    private val splash by lazy { Splash(this) }
+    private var resumed = false
+    private var screenOnAt = 0L   // cuándo se encendió la pantalla (al volver del reposo con la llave)
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                Intent.ACTION_SCREEN_ON -> {
+                    screenOnAt = SystemClock.elapsedRealtime()
+                    if (resumed) showSplashIfPending()
+                }
+                Intent.ACTION_SCREEN_OFF -> splash.cancel()
+            }
+        }
+    }
 
     // ---------- Ciclo de vida ----------
 
@@ -70,10 +94,41 @@ class MainActivity : Activity() {
         btnPlay.setOnClickListener { playPause() }
 
         showFirstRunHint()
+
+        // Pantalla encendida / apagada: la radio "despierta" al poner la llave aunque no se reinicie.
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        // Son avisos del sistema (protegidos); ninguna otra app puede enviarlos.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(screenReceiver, filter)
+        }
+        if (Splash.isNewBoot(this)) splash.show()
+    }
+
+    override fun onDestroy() {
+        try {
+            unregisterReceiver(screenReceiver)
+        } catch (e: Exception) {
+        }
+        super.onDestroy()
+    }
+
+    /** Muestra el logo si la pantalla se acaba de encender (y no se mostró ya). */
+    private fun showSplashIfPending() {
+        if (screenOnAt != 0L && SystemClock.elapsedRealtime() - screenOnAt < 5000) {
+            screenOnAt = 0L
+            splash.show()
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        resumed = true
+        showSplashIfPending()
         buildSlots()
         startGps()
         startMusic()
@@ -81,8 +136,21 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        resumed = false
         stopGps()
         stopMusic()
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // Con el logo en pantalla, un toque solo lo salta (no abre el cajón ni aprieta botones).
+        if (splash.isShowing) return super.dispatchTouchEvent(ev)
+        return swipe.handle(ev) { super.dispatchTouchEvent(it) } || super.dispatchTouchEvent(ev)
+    }
+
+    private fun openAppsDrawer() {
+        startActivity(Intent(this, AppsActivity::class.java))
+        @Suppress("DEPRECATION")
+        overridePendingTransition(R.anim.slide_in_right, R.anim.stay)
     }
 
     /** En la pantalla de inicio, "Atrás" no hace nada. */
@@ -125,7 +193,7 @@ class MainActivity : Activity() {
         val appsButton = layoutInflater.inflate(R.layout.item_slot, slotsContainer, false)
         appsButton.findViewById<ImageView>(R.id.slotIcon).setImageResource(R.drawable.ic_apps)
         appsButton.findViewById<TextView>(R.id.slotLabel).setText(R.string.apps)
-        appsButton.setOnClickListener { startActivity(Intent(this, AppsActivity::class.java)) }
+        appsButton.setOnClickListener { openAppsDrawer() }
         slotsContainer.addView(appsButton)
     }
 
