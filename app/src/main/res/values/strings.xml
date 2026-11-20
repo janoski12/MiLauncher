@@ -7,6 +7,8 @@
     <string name="gps_searching">Buscando GPS…</string>
     <string name="gps_ok">GPS conectado</string>
     <string name="gps_no_permission">Toca para permitir la ubicación</string>
+    <string name="gps_approximate">Toca y elige ubicación precisa</string>
+    <string name="location_settings_hint">Ubicación: elige \"Permitir\" y activa \"Usar ubicación precisa\"</string>
     <string name="gps_unavailable">Esta radio no tiene GPS disponible</string>
     <string name="music_nothing">Nada sonando</string>
     <string name="music_hint_access">Toca aquí para mostrar la canción</string>
