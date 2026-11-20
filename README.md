@@ -1,6 +1,8 @@
 # Mi Launcher — pantalla de inicio para la Bowmann DD-7000A
 
-Launcher propio para un **Mitsubishi Lancer GLX 2010 blanco**: oscuro, con rojo y detalles plateados, pensado para una pantalla de 9" horizontal (1024x600) y una radio con 2 GB de RAM. No usa librerías externas, así que es liviano.
+Launcher propio para un **Mitsubishi Lancer GLX 2010 blanco**: oscuro, con rojo y detalles plateados, pensado para una pantalla de 9" horizontal (1280x720) y una radio con 2 GB de RAM. No usa librerías externas, así que es liviano.
+
+**Al encender la radio** aparece el logo de Mitsubishi unos 2,5 segundos (tocar la pantalla lo salta).
 
 **Pantalla principal**
 - Reloj y fecha grandes
@@ -95,6 +97,7 @@ Para cambiar el nombre sobre el reloj, edita `car_name` en `strings.xml`. Para c
 | Botones de abajo (nombres, apps que detecta) | `app/src/main/java/cl/alejandro/milauncher/Slots.kt` |
 | Tamaños y distribución | `app/src/main/res/layout/activity_main.xml` |
 | Textos | `app/src/main/res/values/strings.xml` |
+| Logo al encender (imagen, duración o desactivarlo) | `res/drawable-nodpi/logo_marca.png` y `Splash.kt` |
 
 Después de cada cambio, vuelve a compilar e instalar. Mientras uses la misma llave (ver *Firma del APK*), se actualiza sin perder la configuración.
 

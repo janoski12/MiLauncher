@@ -1,6 +1,6 @@
 # Mi Launcher — instrucciones para Claude
 
-Launcher Android para una radio Bowmann DD-7000A (pantalla 9" horizontal, 1024x600, 2 GB de RAM)
+Launcher Android para una radio Bowmann DD-7000A (pantalla 9" horizontal, 1280x720, 2 GB de RAM)
 en un Mitsubishi Lancer GLX 2010 blanco. El dueño habla español: responde, comenta el código y
 escribe los commits en español.
 
@@ -20,6 +20,8 @@ escribe los commits en español.
 - `Slots.kt`: accesos rápidos y su detección automática por paquete / palabra clave.
 - `Apps.kt`: lista de apps e íconos en caché (se invalida con avisos de instalación/desinstalación).
 - `AppsActivity.kt`: cajón con todas las apps.
+- `SwipeDetector.kt`: gesto de deslizar (derecha→izquierda abre el cajón; al revés lo cierra).
+- `Splash.kt`: logo de la marca (`res/drawable-nodpi/logo_marca.png`) al arrancar o despertar la radio.
 - `MediaListenerService.kt`: servicio vacío para tener acceso a notificaciones (leer la canción).
 
 ## Compilar en una sesión en la nube
