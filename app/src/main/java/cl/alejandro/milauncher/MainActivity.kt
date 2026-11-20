@@ -23,6 +23,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -45,6 +46,9 @@ class MainActivity : Activity() {
     private var apps: List<AppEntry> = emptyList()
     private var slotsVersion = -1   // versión de Apps con la que se dibujó la fila de abajo
     private val handler = Handler(Looper.getMainLooper())
+
+    /** Deslizar hacia la derecha en cualquier parte abre el cajón de apps. */
+    private val swipe by lazy { SwipeDetector(this, toRight = true) { openAppsDrawer() } }
 
     // ---------- Ciclo de vida ----------
 
@@ -83,6 +87,15 @@ class MainActivity : Activity() {
         super.onPause()
         stopGps()
         stopMusic()
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean =
+        swipe.handle(ev) { super.dispatchTouchEvent(it) } || super.dispatchTouchEvent(ev)
+
+    private fun openAppsDrawer() {
+        startActivity(Intent(this, AppsActivity::class.java))
+        @Suppress("DEPRECATION")
+        overridePendingTransition(R.anim.slide_in_left, R.anim.stay)
     }
 
     /** En la pantalla de inicio, "Atrás" no hace nada. */
@@ -125,7 +138,7 @@ class MainActivity : Activity() {
         val appsButton = layoutInflater.inflate(R.layout.item_slot, slotsContainer, false)
         appsButton.findViewById<ImageView>(R.id.slotIcon).setImageResource(R.drawable.ic_apps)
         appsButton.findViewById<TextView>(R.id.slotLabel).setText(R.string.apps)
-        appsButton.setOnClickListener { startActivity(Intent(this, AppsActivity::class.java)) }
+        appsButton.setOnClickListener { openAppsDrawer() }
         slotsContainer.addView(appsButton)
     }
 

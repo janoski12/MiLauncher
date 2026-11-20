@@ -1,10 +1,12 @@
 package cl.alejandro.milauncher
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -19,11 +21,14 @@ class AppsActivity : Activity() {
     private var apps: List<AppEntry> = emptyList()
     private lateinit var adapter: AppsAdapter
 
+    /** Deslizar hacia la izquierda cierra el cajón (vuelve a la pantalla principal). */
+    private val swipe by lazy { SwipeDetector(this, toRight = false) { close() } }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_apps)
 
-        findViewById<ImageButton>(R.id.btnClose).setOnClickListener { finish() }
+        findViewById<ImageButton>(R.id.btnClose).setOnClickListener { close() }
 
         val grid = findViewById<GridView>(R.id.grid)
         adapter = AppsAdapter()
@@ -41,6 +46,20 @@ class AppsActivity : Activity() {
             )
             true
         }
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean =
+        swipe.handle(ev) { super.dispatchTouchEvent(it) } || super.dispatchTouchEvent(ev)
+
+    @SuppressLint("MissingSuperCall")
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() = close()
+
+    /** Cierra el cajón con la animación hacia la izquierda. */
+    private fun close() {
+        finish()
+        @Suppress("DEPRECATION")
+        overridePendingTransition(R.anim.stay, R.anim.slide_out_left)
     }
 
     override fun onResume() {
