@@ -7,7 +7,7 @@ Launcher propio para un **Mitsubishi Lancer GLX 2010 blanco**: oscuro, con rojo 
 - Velocímetro circular tipo tablero con el GPS de la radio (km/h)
 - Música: canción, artista, carátula y botones anterior / play-pausa / siguiente (Spotify, YouTube Music o cualquier app que use los controles estándar de Android)
 - 6 accesos rápidos: Radio FM, CarPlay/Android Auto, Waze, Música, Teléfono, Ajustes, más un botón **Apps** con todas las apps
-- **Desliza el dedo hacia la derecha** en cualquier parte de la pantalla para abrir todas las apps; hacia la izquierda (o *Atrás*) para cerrarlas
+- **Desliza el dedo de derecha a izquierda** en cualquier parte de la pantalla para abrir todas las apps; de izquierda a derecha (o *Atrás*) para cerrarlas
 
 ---
 

@@ -47,8 +47,8 @@ class MainActivity : Activity() {
     private var slotsVersion = -1   // versión de Apps con la que se dibujó la fila de abajo
     private val handler = Handler(Looper.getMainLooper())
 
-    /** Deslizar hacia la derecha en cualquier parte abre el cajón de apps. */
-    private val swipe by lazy { SwipeDetector(this, toRight = true) { openAppsDrawer() } }
+    /** Deslizar hacia la izquierda (de derecha a izquierda) en cualquier parte abre el cajón de apps. */
+    private val swipe by lazy { SwipeDetector(this, toRight = false) { openAppsDrawer() } }
 
     // ---------- Ciclo de vida ----------
 
@@ -95,7 +95,7 @@ class MainActivity : Activity() {
     private fun openAppsDrawer() {
         startActivity(Intent(this, AppsActivity::class.java))
         @Suppress("DEPRECATION")
-        overridePendingTransition(R.anim.slide_in_left, R.anim.stay)
+        overridePendingTransition(R.anim.slide_in_right, R.anim.stay)
     }
 
     /** En la pantalla de inicio, "Atrás" no hace nada. */

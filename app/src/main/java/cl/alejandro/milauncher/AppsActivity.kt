@@ -21,8 +21,8 @@ class AppsActivity : Activity() {
     private var apps: List<AppEntry> = emptyList()
     private lateinit var adapter: AppsAdapter
 
-    /** Deslizar hacia la izquierda cierra el cajón (vuelve a la pantalla principal). */
-    private val swipe by lazy { SwipeDetector(this, toRight = false) { close() } }
+    /** Deslizar hacia la derecha cierra el cajón (vuelve a la pantalla principal). */
+    private val swipe by lazy { SwipeDetector(this, toRight = true) { close() } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,11 +55,11 @@ class AppsActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() = close()
 
-    /** Cierra el cajón con la animación hacia la izquierda. */
+    /** Cierra el cajón con la animación hacia la derecha. */
     private fun close() {
         finish()
         @Suppress("DEPRECATION")
-        overridePendingTransition(R.anim.stay, R.anim.slide_out_left)
+        overridePendingTransition(R.anim.stay, R.anim.slide_out_right)
     }
 
     override fun onResume() {
