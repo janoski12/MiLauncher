@@ -43,6 +43,7 @@ class MainActivity : Activity() {
     private lateinit var slotsContainer: LinearLayout
 
     private var apps: List<AppEntry> = emptyList()
+    private var slotsVersion = -1   // versión de Apps con la que se dibujó la fila de abajo
     private val handler = Handler(Looper.getMainLooper())
 
     // ---------- Ciclo de vida ----------
@@ -94,8 +95,11 @@ class MainActivity : Activity() {
     // Accesos rápidos (fila inferior)
     // =====================================================================
 
-    private fun buildSlots() {
+    /** Rehace la fila de abajo solo si cambiaron las apps instaladas (o si se pide con force). */
+    private fun buildSlots(force: Boolean = false) {
         apps = Apps.load(this)
+        if (!force && slotsVersion == Apps.version) return
+        slotsVersion = Apps.version
         slotsContainer.removeAllViews()
 
         for (slot in Slots.all) {
@@ -106,7 +110,7 @@ class MainActivity : Activity() {
 
             if (entry != null) {
                 icon.setImageDrawable(Apps.icon(this, entry.component))
-                label.text = if (Slots.manual(this, slot) != null) entry.label else slot.label
+                label.text = Slots.labelFor(this, slot, entry)
                 view.setOnClickListener { Apps.launch(this, entry.component) }
             } else {
                 icon.setImageResource(R.drawable.ic_add)
@@ -134,7 +138,7 @@ class MainActivity : Activity() {
             .setTitle(getString(R.string.pick_app_title, slot.label))
             .setItems(names) { _, which ->
                 Slots.setManual(this, slot, if (which == 0) null else list[which - 1].component)
-                buildSlots()
+                buildSlots(force = true)
             }
             .show()
     }

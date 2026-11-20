@@ -45,9 +45,14 @@ class AppsActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        apps = Apps.load(this)
-        adapter.notifyDataSetChanged()
+        val fresh = Apps.load(this)   // viene de memoria salvo que hayan cambiado las apps
+        if (fresh !== apps) {
+            apps = fresh
+            adapter.notifyDataSetChanged()
+        }
     }
+
+    private class Holder(val icon: ImageView, val label: TextView)
 
     private inner class AppsAdapter : BaseAdapter() {
         override fun getCount() = apps.size
@@ -55,10 +60,13 @@ class AppsActivity : Activity() {
         override fun getItemId(position: Int) = position.toLong()
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val view = convertView ?: layoutInflater.inflate(R.layout.item_app, parent, false)
+            val view = convertView ?: layoutInflater.inflate(R.layout.item_app, parent, false).also {
+                it.tag = Holder(it.findViewById(R.id.appIcon), it.findViewById(R.id.appLabel))
+            }
+            val holder = view.tag as Holder
             val entry = apps[position]
-            view.findViewById<ImageView>(R.id.appIcon).setImageDrawable(Apps.icon(this@AppsActivity, entry.component))
-            view.findViewById<TextView>(R.id.appLabel).text = entry.label
+            holder.icon.setImageDrawable(Apps.icon(this@AppsActivity, entry.component))
+            holder.label.text = entry.label
             return view
         }
     }
