@@ -11,6 +11,13 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_diamantes" />
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -19,6 +26,16 @@
             android:textColor="@color/text_primary"
             android:textSize="26sp"
             android:textStyle="bold" />
+
+        <!-- El Lancer, de adorno -->
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="18dp"
+            android:alpha="0.85"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/lancer_silueta" />
 
         <ImageButton
             android:id="@+id/btnClose"

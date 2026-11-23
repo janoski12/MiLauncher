@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Silueta lateral del Lancer sedán 2010 blanco (trompa "shark nose", mirando a la izquierda).
+     Dibujada a mano: carrocería blanco perla, vidrios oscuros, focos rojos como el tablero. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp" android:height="140dp"
+    android:viewportWidth="400" android:viewportHeight="140">
+    <!-- Carrocería -->
+    <path android:fillColor="@color/pearl" android:strokeColor="@color/silver"
+        android:strokeWidth="2.5" android:strokeLineJoin="round"
+        android:pathData="M17,116 L4,77 Q3,70 12,68 L125,56 Q138,54 146,52 L203,15 Q212,9 232,8 L262,9 Q276,10 287,18 L333,47 L377,50 Q386,51 387,59 L389,94 Q389,112 377,116 L338,116 A33,33 0 0 0 272,116 L118,116 A33,33 0 0 0 52,116 Z"/>
+    <!-- Vidrios -->
+    <path android:fillColor="#E61A1A1F"
+        android:pathData="M154,52 L205,19 Q212,15 228,15 L247,15 L247,52 Z M254,15 L260,15 Q271,16 281,23 L319,48 L254,51 Z"/>
+    <!-- Parrilla trapezoidal -->
+    <path android:fillColor="#FF0B0B0D" android:pathData="M9,84 L30,82 L34,104 L16,108 Z"/>
+    <!-- Línea de cintura y puertas -->
+    <path android:strokeColor="#FF7A7E85" android:strokeWidth="1.5"
+        android:pathData="M36,80 L230,76 L386,70 M250,53 L250,114 M158,55 L162,114"/>
+    <!-- Foco delantero -->
+    <path android:fillColor="#FF5A5E66" android:pathData="M7,74 L46,70 L41,77 L10,80 Z"/>
+    <!-- Foco trasero -->
+    <path android:fillColor="@color/accent" android:pathData="M360,54 L387,57 L388,69 L366,65 Z"/>
+    <!-- Ruedas -->
+    <path android:fillColor="#FF0B0B0D" android:strokeColor="@color/silver" android:strokeWidth="3"
+        android:pathData="M60,114 a25,25 0 1,0 50,0 a25,25 0 1,0 -50,0 M280,114 a25,25 0 1,0 50,0 a25,25 0 1,0 -50,0"/>
+    <path android:strokeColor="@color/silver" android:strokeWidth="1.5"
+        android:pathData="M70,114 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 M290,114 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0"/>
+    <path android:fillColor="@color/accent"
+        android:pathData="M82,114 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M302,114 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+</vector>

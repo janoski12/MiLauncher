@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Los tres diamantes de Mitsubishi en rojo tablero (mismas proporciones que logo_marca.png). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="21dp"
+    android:viewportWidth="641" android:viewportHeight="555">
+    <path android:fillColor="@color/accent"
+        android:pathData="M320,0 L427,185 L320,370 L213,185 Z M107,370 L320,370 L213,555 L0,555 Z M320,370 L534,370 L641,555 L427,555 Z"/>
+</vector>

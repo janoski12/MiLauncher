@@ -57,16 +57,31 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/carName"
+                    <!-- Diamantes de Mitsubishi + nombre del auto -->
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:letterSpacing="0.25"
-                        android:maxLines="1"
-                        android:text="@string/car_name"
-                        android:textColor="@color/silver"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="7dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_diamantes" />
+
+                        <TextView
+                            android:id="@+id/carName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.25"
+                            android:maxLines="1"
+                            android:text="@string/car_name"
+                            android:textColor="@color/silver"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextClock
                         android:id="@+id/date"
@@ -101,15 +116,30 @@
             android:layout_width="14dp"
             android:layout_height="match_parent" />
 
-        <!-- Música -->
-        <LinearLayout
+        <!-- Música (con la silueta del Lancer de fondo, abajo a la derecha) -->
+        <FrameLayout
             android:id="@+id/musicCard"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.25"
             android:background="@drawable/bg_card"
             android:clickable="true"
-            android:focusable="true"
+            android:focusable="true">
+
+        <ImageView
+            android:layout_width="260dp"
+            android:layout_height="91dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:alpha="0.22"
+            android:contentDescription="@null"
+            android:scaleType="fitEnd"
+            android:src="@drawable/lancer_silueta" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="18dp">
@@ -211,6 +241,7 @@
                     android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 
     <!-- ===== Fila inferior: accesos rápidos (se llenan desde el código) ===== -->
