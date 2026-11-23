@@ -27,6 +27,7 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -88,7 +89,7 @@ class MainActivity : Activity() {
         slotsContainer = findViewById(R.id.slots)
 
         findViewById<LinearLayout>(R.id.infoCard).setOnClickListener { onInfoCardClicked() }
-        findViewById<LinearLayout>(R.id.musicCard).setOnClickListener { onMusicCardClicked() }
+        findViewById<View>(R.id.musicCard).setOnClickListener { onMusicCardClicked() }
         findViewById<ImageButton>(R.id.btnPrev).setOnClickListener { previous() }
         findViewById<ImageButton>(R.id.btnNext).setOnClickListener { next() }
         btnPlay.setOnClickListener { playPause() }

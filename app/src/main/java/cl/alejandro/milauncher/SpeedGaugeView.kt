@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.AttributeSet
@@ -16,7 +17,8 @@ import kotlin.math.sin
 
 /**
  * Velocímetro circular estilo tablero: arco de 270°, avance en rojo,
- * marcas blancas cada 20 km/h y aro plateado.
+ * marcas blancas cada 20 km/h, aro plateado y los diamantes de Mitsubishi abajo,
+ * en el hueco del arco (como en el tablero del Lancer).
  */
 class SpeedGaugeView @JvmOverloads constructor(
     context: Context,
@@ -63,6 +65,12 @@ class SpeedGaugeView @JvmOverloads constructor(
         typeface = Typeface.create("sans-serif", Typeface.BOLD)
     }
     private val oval = RectF()
+    private val logoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = red
+    }
+    private val logoPath = Path()
+    private var logoSize = -1f
 
     /** Cambia la velocidad (km/h). null = sin señal. */
     fun setSpeed(kmh: Float?) {
@@ -156,6 +164,32 @@ class SpeedGaugeView @JvmOverloads constructor(
 
         unitPaint.textSize = size * 0.07f
         canvas.drawText(context.getString(R.string.kmh), cx, cy + size * 0.2f, unitPaint)
+
+        // Diamantes de Mitsubishi en el hueco de abajo del arco
+        if (logoSize != size) {
+            buildLogo(size * 0.12f)
+            logoSize = size
+        }
+        canvas.save()
+        canvas.translate(cx - size * 0.06f, cy + size * 0.27f)
+        canvas.drawPath(logoPath, logoPaint)
+        canvas.restore()
+    }
+
+    /** Arma los tres diamantes (proporciones del logo: 641 x 555) con el ancho dado. */
+    private fun buildLogo(w: Float) {
+        val k = w / 641f
+        val pts = arrayOf(
+            floatArrayOf(320f, 0f, 427f, 185f, 320f, 370f, 213f, 185f),
+            floatArrayOf(107f, 370f, 320f, 370f, 213f, 555f, 0f, 555f),
+            floatArrayOf(320f, 370f, 534f, 370f, 641f, 555f, 427f, 555f)
+        )
+        logoPath.reset()
+        for (d in pts) {
+            logoPath.moveTo(d[0] * k, d[1] * k)
+            for (i in 2 until d.size step 2) logoPath.lineTo(d[i] * k, d[i + 1] * k)
+            logoPath.close()
+        }
     }
 
     private companion object {

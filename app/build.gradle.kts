@@ -30,8 +30,8 @@ android {
         // pero por dentro corren una versión más antigua.
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 6
+        versionName = "1.5"
     }
 
     signingConfigs {

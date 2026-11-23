@@ -2,7 +2,9 @@
 
 Launcher propio para un **Mitsubishi Lancer GLX 2010 blanco**: oscuro, con rojo y detalles plateados, pensado para una pantalla de 9" horizontal (1280x720) y una radio con 2 GB de RAM. No usa librerías externas, así que es liviano.
 
-**Al encender la radio** aparece el logo de Mitsubishi unos 2,5 segundos (tocar la pantalla lo salta).
+**Al encender la radio** aparece el logo de Mitsubishi con "LANCER GLX" debajo unos 2,5 segundos (tocar la pantalla lo salta).
+
+Detalles del Lancer en la pantalla: una foto del auto entre el velocímetro y la música (con "LANCER GLX 2010" debajo), los tres diamantes rojos junto al nombre del auto y abajo del velocímetro, y el logo con la foto arriba del cajón de apps.
 
 **Pantalla principal**
 - Reloj y fecha grandes
@@ -98,6 +100,9 @@ Para cambiar el nombre sobre el reloj, edita `car_name` en `strings.xml`. Para c
 | Tamaños y distribución | `app/src/main/res/layout/activity_main.xml` |
 | Textos | `app/src/main/res/values/strings.xml` |
 | Logo al encender (imagen, duración o desactivarlo) | `res/drawable-nodpi/logo_marca.png` y `Splash.kt` |
+| Foto del auto (PNG sin fondo, unos 700 px de ancho) | `res/drawable-nodpi/auto_lancer.png` |
+| Año bajo la foto | `car_year` en `app/src/main/res/values/strings.xml` |
+| Diamantes rojos | `res/drawable/ic_diamantes.xml` |
 
 Después de cada cambio, vuelve a compilar e instalar. Mientras uses la misma llave (ver *Firma del APK*), se actualiza sin perder la configuración.
 

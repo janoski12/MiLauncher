@@ -2,6 +2,7 @@ package cl.alejandro.milauncher
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Typeface
 import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
@@ -11,9 +12,11 @@ import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 
 /**
- * Logo de la marca a pantalla completa al encender la radio.
+ * Logo de la marca a pantalla completa al encender la radio, con "LANCER GLX" debajo.
  *
  * Se dibuja encima de la pantalla principal (no es otra Activity, así es instantáneo y liviano):
  * aparece con un fundido, se queda unos segundos y desaparece. Tocar la pantalla lo salta.
@@ -36,12 +39,35 @@ class Splash(private val activity: Activity) {
             scaleType = ImageView.ScaleType.FIT_CENTER
             adjustViewBounds = true
         }
+        // Debajo del logo: el nombre del auto en plata, como la placa del maletero
+        val name = TextView(activity).apply {
+            setText(R.string.car_name)
+            setTextColor(activity.getColor(R.color.silver))
+            textSize = 30f
+            letterSpacing = 0.45f
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            gravity = Gravity.CENTER
+        }
+        val line = View(activity).apply { setBackgroundResource(R.drawable.accent_line) }
+        val dp = activity.resources.displayMetrics.density
+
+        val column = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            // El logo ocupa ~50 % del alto de la pantalla
+            val h = (activity.resources.displayMetrics.heightPixels * 0.5f).toInt()
+            addView(logo, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h))
+            addView(line, LinearLayout.LayoutParams((90 * dp).toInt(), (3 * dp).toInt()).apply {
+                topMargin = (22 * dp).toInt()
+            })
+            addView(name, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = (10 * dp).toInt()
+            })
+        }
         val overlay = FrameLayout(activity).apply {
             setBackgroundColor(0xFF000000.toInt())
             isClickable = true   // que los toques no lleguen a los botones de abajo
-            // El logo ocupa ~60 % del alto de la pantalla, centrado
-            val h = (activity.resources.displayMetrics.heightPixels * 0.6f).toInt()
-            addView(logo, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h, Gravity.CENTER))
+            addView(column, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
             setOnClickListener { hide() }
         }
         root.addView(overlay, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -53,6 +79,13 @@ class Splash(private val activity: Activity) {
         logo.scaleY = 0.92f
         logo.animate().alpha(1f).scaleX(1f).scaleY(1f)
             .setDuration(FADE_IN_MS).setInterpolator(DecelerateInterpolator()).start()
+        // Después aparecen la línea roja y "LANCER GLX"
+        for (v in listOf(line, name)) {
+            v.alpha = 0f
+            v.translationY = 12 * dp
+            v.animate().alpha(1f).translationY(0f).setStartDelay(FADE_IN_MS / 2)
+                .setDuration(FADE_IN_MS).setInterpolator(DecelerateInterpolator()).start()
+        }
 
         overlay.postDelayed({ if (view === overlay) hide() }, TOTAL_MS - FADE_OUT_MS)
     }
