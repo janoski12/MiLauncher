@@ -3,6 +3,8 @@
     <string name="app_name">Mi Launcher</string>
     <!-- Nombre que aparece sobre el reloj -->
     <string name="car_name">LANCER GLX</string>
+    <!-- Año que aparece bajo la foto del auto -->
+    <string name="car_year">2010</string>
     <string name="kmh">km/h</string>
     <string name="gps_searching">Buscando GPS…</string>
     <string name="gps_ok">GPS conectado</string>

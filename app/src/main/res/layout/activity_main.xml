@@ -112,11 +112,53 @@
                 android:layout_weight="1" />
         </LinearLayout>
 
-        <Space
-            android:layout_width="14dp"
-            android:layout_height="match_parent" />
+        <!-- Centro: foto del Lancer con su nombre debajo -->
+        <LinearLayout
+            android:layout_width="340dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <!-- Música (con la silueta del Lancer de fondo, abajo a la derecha) -->
+            <ImageView
+                android:id="@+id/carPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/car_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/auto_lancer" />
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/accent_line" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.4"
+                android:maxLines="1"
+                android:text="@string/car_name"
+                android:textColor="@color/silver"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:letterSpacing="0.3"
+                android:text="@string/car_year"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Música -->
         <FrameLayout
             android:id="@+id/musicCard"
             android:layout_width="0dp"
@@ -125,17 +167,6 @@
             android:background="@drawable/bg_card"
             android:clickable="true"
             android:focusable="true">
-
-        <ImageView
-            android:layout_width="260dp"
-            android:layout_height="91dp"
-            android:layout_gravity="bottom|end"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="12dp"
-            android:alpha="0.22"
-            android:contentDescription="@null"
-            android:scaleType="fitEnd"
-            android:src="@drawable/lancer_silueta" />
 
         <LinearLayout
             android:layout_width="match_parent"
