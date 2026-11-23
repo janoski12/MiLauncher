@@ -535,7 +535,7 @@ class MainActivity : Activity() {
     }
 
     private fun showArtPlaceholder() {
-        val pad = (36 * resources.displayMetrics.density).toInt()
+        val pad = (26 * resources.displayMetrics.density).toInt()
         albumArt.setPadding(pad, pad, pad, pad)
         albumArt.scaleType = ImageView.ScaleType.CENTER_INSIDE
         albumArt.setImageResource(R.drawable.ic_music)
