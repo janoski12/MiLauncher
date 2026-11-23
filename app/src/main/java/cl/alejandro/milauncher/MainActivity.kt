@@ -56,6 +56,20 @@ class MainActivity : Activity() {
 
     // ---------- Logo al encender ----------
     private val splash by lazy { Splash(this) }
+    private lateinit var nightMode: NightMode
+
+    /** Revisa cada minuto si ya es de noche (o de día). */
+    private val nightTicker = object : Runnable {
+        override fun run() {
+            nightMode.update()
+            handler.postDelayed(this, 60_000)
+        }
+    }
+
+    // ---------- Velocidad máxima del viaje ----------
+    private val generalPrefs by lazy { getSharedPreferences("general", Context.MODE_PRIVATE) }
+    private var tripMax = 0f
+    private var prevKmh = 0f   // lectura anterior, para ignorar saltos sueltos del GPS
     private var resumed = false
     private var screenOnAt = 0L   // cuándo se encendió la pantalla (al volver del reposo con la llave)
 
@@ -94,6 +108,10 @@ class MainActivity : Activity() {
         findViewById<ImageButton>(R.id.btnNext).setOnClickListener { next() }
         btnPlay.setOnClickListener { playPause() }
 
+        nightMode = NightMode(this)
+        tripMax = generalPrefs.getFloat("trip_max", 0f)
+        gauge.tripMax = tripMax
+
         showFirstRunHint()
 
         // Pantalla encendida / apagada: la radio "despierta" al poner la llave aunque no se reinicie.
@@ -107,7 +125,24 @@ class MainActivity : Activity() {
         } else {
             registerReceiver(screenReceiver, filter)
         }
-        if (Splash.isNewBoot(this)) splash.show()
+        if (Splash.isNewBoot(this)) onCarStarted()
+    }
+
+    /**
+     * La radio se encendió (arranque o al despertar con la llave): empieza un viaje nuevo,
+     * aparece el logo y, cuando se va, el velocímetro hace su barrido.
+     */
+    private fun onCarStarted() {
+        resetTrip()
+        splash.show()
+        if (splash.isShowing) splash.onHide = { gauge.sweep() } else gauge.sweep()
+    }
+
+    private fun resetTrip() {
+        tripMax = 0f
+        prevKmh = 0f
+        gauge.tripMax = tripMax
+        generalPrefs.edit().putFloat("trip_max", 0f).apply()
     }
 
     override fun onDestroy() {
@@ -122,7 +157,7 @@ class MainActivity : Activity() {
     private fun showSplashIfPending() {
         if (screenOnAt != 0L && SystemClock.elapsedRealtime() - screenOnAt < 5000) {
             screenOnAt = 0L
-            splash.show()
+            onCarStarted()
         }
     }
 
@@ -130,6 +165,7 @@ class MainActivity : Activity() {
         super.onResume()
         resumed = true
         showSplashIfPending()
+        handler.post(nightTicker)
         buildSlots()
         startGps()
         startMusic()
@@ -138,6 +174,7 @@ class MainActivity : Activity() {
     override fun onPause() {
         super.onPause()
         resumed = false
+        handler.removeCallbacks(nightTicker)
         stopGps()
         stopMusic()
     }
@@ -328,9 +365,27 @@ class MainActivity : Activity() {
         // Bajo 2 km/h el GPS "baila"; se muestra 0.
         gauge.setSpeed(if (kmh < 2f) 0f else kmh)
         gpsStatus.setText(R.string.gps_ok)
+        updateTripMax(location, kmh)
+        nightMode.setLocation(location.latitude, location.longitude)
+    }
+
+    /**
+     * Solo cuenta una velocidad si se repite en dos lecturas seguidas (se usa la menor de las dos)
+     * y la señal es buena: así un salto falso del GPS no deja marcado "180".
+     */
+    private fun updateTripMax(location: Location, kmh: Float) {
+        val goodSignal = !location.hasAccuracy() || location.accuracy <= 25f
+        val confirmed = if (goodSignal) minOf(kmh, prevKmh) else 0f
+        prevKmh = if (goodSignal) kmh else 0f
+        if (confirmed >= tripMax + 1f) {
+            tripMax = confirmed
+            gauge.tripMax = tripMax
+            generalPrefs.edit().putFloat("trip_max", tripMax).apply()
+        }
     }
 
     private fun showGpsSearching() {
+        prevKmh = 0f
         gauge.setSpeed(null)
         gpsStatus.setText(R.string.gps_searching)
     }

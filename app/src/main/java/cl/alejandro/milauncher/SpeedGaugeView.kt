@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import kotlin.math.cos
 import kotlin.math.min
@@ -31,6 +32,16 @@ class SpeedGaugeView @JvmOverloads constructor(
     private var targetSpeed: Float? = null   // null = sin señal GPS
     private var shownSpeed = 0f
     private var animator: ValueAnimator? = null
+    private var sweeping = false             // barrido de encendido en curso
+
+    /** Velocidad máxima del viaje (km/h); null = no se muestra. */
+    var tripMax: Float? = null
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+            }
+        }
 
     private val red = context.getColor(R.color.accent)
     private val silver = context.getColor(R.color.silver)
@@ -64,6 +75,11 @@ class SpeedGaugeView @JvmOverloads constructor(
         color = red
         typeface = Typeface.create("sans-serif", Typeface.BOLD)
     }
+    private val maxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        color = silver
+        typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+    }
     private val oval = RectF()
     private val logoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -75,6 +91,7 @@ class SpeedGaugeView @JvmOverloads constructor(
     /** Cambia la velocidad (km/h). null = sin señal. */
     fun setSpeed(kmh: Float?) {
         targetSpeed = kmh
+        if (sweeping) return   // al terminar el barrido se va a esta velocidad
         val to = (kmh ?: 0f).coerceIn(0f, maxSpeed)
         animator?.cancel()
         animator = ValueAnimator.ofFloat(shownSpeed, to).apply {
@@ -84,6 +101,35 @@ class SpeedGaugeView @JvmOverloads constructor(
                 shownSpeed = it.animatedValue as Float
                 invalidate()
             }
+            start()
+        }
+    }
+
+    /**
+     * Barrido de encendido, como el chequeo del tablero al dar contacto:
+     * sube hasta el máximo, baja a cero y luego muestra la velocidad real.
+     */
+    fun sweep() {
+        animator?.cancel()
+        sweeping = true
+        animator = ValueAnimator.ofFloat(0f, maxSpeed, 0f).apply {
+            duration = SWEEP_MS
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener {
+                shownSpeed = it.animatedValue as Float
+                invalidate()
+            }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                private var cancelled = false
+                override fun onAnimationCancel(animation: android.animation.Animator) {
+                    cancelled = true
+                }
+
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    sweeping = false
+                    if (!cancelled) setSpeed(targetSpeed)
+                }
+            })
             start()
         }
     }
@@ -157,21 +203,28 @@ class SpeedGaugeView @JvmOverloads constructor(
             }
         }
 
-        // Número central
-        speedPaint.textSize = size * 0.25f
-        val text = if (targetSpeed == null) "--" else shownSpeed.roundToInt().toString()
+        // Número central (con 3 cifras se achica para no tapar el 40 y el 160)
+        val text = if (targetSpeed == null && !sweeping) "--" else shownSpeed.roundToInt().toString()
+        speedPaint.textSize = size * if (text.length > 2) 0.19f else 0.25f
         canvas.drawText(text, cx, cy + size * 0.07f, speedPaint)
 
         unitPaint.textSize = size * 0.07f
         canvas.drawText(context.getString(R.string.kmh), cx, cy + size * 0.2f, unitPaint)
 
+        // Velocidad máxima del viaje
+        val max = tripMax
+        if (max != null && max >= 1f) {
+            maxPaint.textSize = size * 0.048f
+            canvas.drawText(context.getString(R.string.trip_max, max.roundToInt()), cx, cy + size * 0.29f, maxPaint)
+        }
+
         // Diamantes de Mitsubishi en el hueco de abajo del arco
         if (logoSize != size) {
-            buildLogo(size * 0.12f)
+            buildLogo(size * 0.10f)
             logoSize = size
         }
         canvas.save()
-        canvas.translate(cx - size * 0.06f, cy + size * 0.27f)
+        canvas.translate(cx - size * 0.05f, cy + size * 0.325f)
         canvas.drawPath(logoPath, logoPaint)
         canvas.restore()
     }
@@ -195,5 +248,6 @@ class SpeedGaugeView @JvmOverloads constructor(
     private companion object {
         const val START = 135f   // empieza abajo a la izquierda
         const val SWEEP = 270f   // termina abajo a la derecha
+        const val SWEEP_MS = 1700L   // duración del barrido al encender
     }
 }

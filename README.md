@@ -6,6 +6,12 @@ Launcher propio para un **Mitsubishi Lancer GLX 2010 blanco**: oscuro, con rojo 
 
 Detalles del Lancer en la pantalla: una foto del auto entre el velocímetro y la música (con "LANCER GLX 2010" debajo), los tres diamantes rojos junto al nombre del auto y abajo del velocímetro, y el logo con la foto arriba del cajón de apps.
 
+**Al dar contacto**, cuando se va el logo, el velocímetro hace un barrido hasta 200 y vuelve, como el tablero.
+
+**Velocidad máxima del viaje:** aparece como "MÁX" dentro del velocímetro y vuelve a cero cada vez que se enciende la radio. Ignora los saltos falsos del GPS.
+
+**Modo noche automático:** desde la puesta del sol hasta el amanecer, la pantalla se pone más tenue. La hora del sol se calcula con tu ubicación GPS (sin señal, usa la de Santiago).
+
 **Pantalla principal**
 - Reloj y fecha grandes
 - Velocímetro circular tipo tablero con el GPS de la radio (km/h)
@@ -102,6 +108,8 @@ Para cambiar el nombre sobre el reloj, edita `car_name` en `strings.xml`. Para c
 | Logo al encender (imagen, duración o desactivarlo) | `res/drawable-nodpi/logo_marca.png` y `Splash.kt` |
 | Foto del auto (PNG sin fondo, unos 700 px de ancho) | `res/drawable-nodpi/auto_lancer.png` |
 | Año bajo la foto | `car_year` en `app/src/main/res/values/strings.xml` |
+| Modo noche (qué tan oscuro, o desactivarlo) | `NIGHT_COLOR` y `ENABLED` en `NightMode.kt` |
+| Duración del barrido del velocímetro | `SWEEP_MS` en `SpeedGaugeView.kt` |
 | Diamantes rojos | `res/drawable/ic_diamantes.xml` |
 
 Después de cada cambio, vuelve a compilar e instalar. Mientras uses la misma llave (ver *Firma del APK*), se actualiza sin perder la configuración.

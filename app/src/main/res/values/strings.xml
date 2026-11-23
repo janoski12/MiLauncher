@@ -6,6 +6,8 @@
     <!-- Año que aparece bajo la foto del auto -->
     <string name="car_year">2010</string>
     <string name="kmh">km/h</string>
+    <!-- Velocidad máxima del viaje, dentro del velocímetro -->
+    <string name="trip_max">MÁX  %1$d</string>
     <string name="gps_searching">Buscando GPS…</string>
     <string name="gps_ok">GPS conectado</string>
     <string name="gps_no_permission">Toca para permitir la ubicación</string>

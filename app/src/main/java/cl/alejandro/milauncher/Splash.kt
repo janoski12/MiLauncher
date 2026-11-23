@@ -28,6 +28,9 @@ class Splash(private val activity: Activity) {
 
     private var view: View? = null
 
+    /** Se llama cuando el logo empieza a desaparecer (para el barrido del velocímetro). */
+    var onHide: (() -> Unit)? = null
+
     val isShowing get() = view != null
 
     fun show() {
@@ -94,6 +97,8 @@ class Splash(private val activity: Activity) {
     fun hide() {
         val v = view ?: return
         view = null
+        onHide?.invoke()
+        onHide = null
         v.isClickable = false
         v.animate().alpha(0f).setDuration(FADE_OUT_MS).setInterpolator(AccelerateInterpolator())
             .withEndAction { (v.parent as? ViewGroup)?.removeView(v) }
@@ -102,6 +107,7 @@ class Splash(private val activity: Activity) {
 
     /** Quita el logo de inmediato (por ejemplo, si la pantalla se apaga mientras se muestra). */
     fun cancel() {
+        onHide = null
         val v = view ?: return
         view = null
         v.animate().cancel()
