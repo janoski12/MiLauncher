@@ -1,4 +1,13 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient android:angle="315"
-        android:startColor="#FF2A080B" android:centerColor="#FF120709" android:endColor="#FF0B0B0D"/>
-</shape>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fondo: fibra de carbono (carbono.png repetido) con el degradado rojo del tablero encima. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap android:src="@drawable/carbono" android:tileMode="repeat" />
+    </item>
+    <item>
+        <shape>
+            <gradient android:angle="315"
+                android:startColor="#BF3C080C" android:centerColor="#59120709" android:endColor="#330B0B0D" />
+        </shape>
+    </item>
+</layer-list>

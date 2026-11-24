@@ -122,6 +122,16 @@
             android:gravity="center"
             android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/greeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/pearl"
+                android:textSize="19sp" />
+
             <ImageView
                 android:id="@+id/carPhoto"
                 android:layout_width="match_parent"
@@ -157,17 +167,93 @@
                 android:text="@string/car_year"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
+
+            <!-- Computador de viaje: km y tiempo desde que se encendió la radio -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_trip"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="7dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="7dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tripDistance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-condensed"
+                        android:text="0,0 km"
+                        android:textColor="@color/pearl"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.2"
+                        android:text="@string/trip_distance_label"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="22dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tripTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-condensed"
+                        android:text="0:00"
+                        android:textColor="@color/pearl"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.2"
+                        android:text="@string/trip_time_label"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Música: arriba carátula + canción, abajo los botones (cabe aunque la tarjeta sea angosta) -->
-        <LinearLayout
+        <!-- Música: carátula difuminada de fondo; arriba carátula + canción, abajo progreso y botones -->
+        <FrameLayout
             android:id="@+id/musicCard"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.15"
             android:background="@drawable/bg_card"
             android:clickable="true"
-            android:focusable="true"
+            android:focusable="true">
+
+        <ImageView
+            android:id="@+id/musicBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.3"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="18dp">
@@ -228,10 +314,50 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Progreso de la canción (se oculta si la app no informa la duración) -->
+            <LinearLayout
+                android:id="@+id/musicProgressBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="vertical"
+                android:visibility="invisible">
+
+                <ProgressBar
+                    android:id="@+id/musicProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:max="1000"
+                    android:progressDrawable="@drawable/progress_music" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/musicElapsed"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/musicRemaining"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="26dp"
+                android:layout_marginTop="14dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -277,6 +403,7 @@
                 android:gravity="center"
                 android:textSize="13sp" />
         </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 
     <!-- ===== Fila inferior: accesos rápidos (se llenan desde el código) ===== -->

@@ -2,13 +2,23 @@
 
 Launcher propio para un **Mitsubishi Lancer GLX 2010 blanco**: oscuro, con rojo y detalles plateados, pensado para una pantalla de 9" horizontal (1280x720) y una radio con 2 GB de RAM. No usa librerías externas, así que es liviano.
 
-**Al encender la radio** aparece el logo de Mitsubishi con "LANCER GLX" debajo unos 2,5 segundos (tocar la pantalla lo salta).
+**Al encender la radio** los tres diamantes de Mitsubishi llegan uno por uno, aparece "MITSUBISHI" y luego "LANCER GLX". Dura 3 segundos (tocar la pantalla lo salta).
 
 Detalles del Lancer en la pantalla: una foto del auto entre el velocímetro y la música (con "LANCER GLX 2010" debajo), los tres diamantes rojos junto al nombre del auto y abajo del velocímetro, y el logo con la foto arriba del cajón de apps.
 
 **Al dar contacto**, cuando se va el logo, el velocímetro hace un barrido hasta 200 y vuelve, como el tablero.
 
 **Velocidad máxima del viaje:** aparece como "MÁX" dentro del velocímetro y vuelve a cero cada vez que se enciende la radio. Ignora los saltos falsos del GPS.
+
+**Computador de viaje:** bajo la foto del auto se ven los kilómetros recorridos y el tiempo desde que se encendió la radio. También vuelven a cero al encenderla.
+
+**Brújula:** en movimiento, el rumbo (N, NE, E, SE, S, SO, O, NO) aparece arriba del número del velocímetro.
+
+**Alerta de velocidad:** una marca blanca en el arco indica el límite (por defecto 120 km/h). Si lo pasas, el número se pone rojo y el aro parpadea. **Mantén presionado el velocímetro** para cambiar el límite (60, 80, 100, 120) o quitar la alerta.
+
+**Música:** la carátula del álbum se ve difuminada de fondo, y una barra muestra cuánto lleva la canción y cuánto le falta (si la app de música lo informa).
+
+**Saludo:** arriba del auto dice "Buenos días", "Buenas tardes" o "Buenas noches" con tu nombre.
 
 **Modo noche automático:** desde la puesta del sol hasta el amanecer, la pantalla se pone más tenue. La hora del sol se calcula con tu ubicación GPS (sin señal, usa la de Santiago).
 
@@ -101,14 +111,16 @@ Para cambiar el nombre sobre el reloj, edita `car_name` en `strings.xml`. Para c
 | Quiero cambiar… | Archivo |
 |---|---|
 | Colores (rojo, fondo, tarjetas) | `app/src/main/res/values/colors.xml` |
-| Fondo degradado | `app/src/main/res/drawable/bg_main.xml` |
+| Fondo (fibra de carbono + degradado rojo) | `app/src/main/res/drawable/bg_main.xml` y `res/drawable-nodpi/carbono.png` |
 | Botones de abajo (nombres, apps que detecta) | `app/src/main/java/cl/alejandro/milauncher/Slots.kt` |
 | Tamaños y distribución | `app/src/main/res/layout/activity_main.xml` |
 | Textos | `app/src/main/res/values/strings.xml` |
-| Logo al encender (imagen, duración o desactivarlo) | `res/drawable-nodpi/logo_marca.png` y `Splash.kt` |
+| Logo al encender (animación, duración o desactivarlo) | `Splash.kt` y `res/drawable-nodpi/logo_texto.png` |
 | Foto del auto (PNG sin fondo, unos 700 px de ancho) | `res/drawable-nodpi/auto_lancer.png` |
 | Año bajo la foto | `car_year` en `app/src/main/res/values/strings.xml` |
 | Modo noche (qué tan oscuro, o desactivarlo) | `NIGHT_COLOR` y `ENABLED` en `NightMode.kt` |
+| Nombre del saludo | `driver_name` en `app/src/main/res/values/strings.xml` |
+| Límite de velocidad por defecto | `DEFAULT_SPEED_LIMIT` en `MainActivity.kt` |
 | Duración del barrido del velocímetro | `SWEEP_MS` en `SpeedGaugeView.kt` |
 | Diamantes rojos | `res/drawable/ic_diamantes.xml` |
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Los tres diamantes de Mitsubishi en rojo tablero (mismas proporciones que logo_marca.png). -->
+<!-- Los tres diamantes de Mitsubishi en rojo tablero (mismas proporciones que el logo original). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="21dp"
     android:viewportWidth="641" android:viewportHeight="555">

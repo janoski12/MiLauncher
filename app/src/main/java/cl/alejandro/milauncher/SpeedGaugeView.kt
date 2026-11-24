@@ -17,7 +17,8 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
- * Velocímetro circular estilo tablero: arco de 270°, avance en rojo,
+ * Velocímetro circular estilo tablero: arco de 270°, avance en rojo, rumbo (brújula) arriba,
+ * marca blanca en el límite de velocidad (al pasarlo, el aro parpadea en rojo),
  * marcas blancas cada 20 km/h, aro plateado y los diamantes de Mitsubishi abajo,
  * en el hueco del arco (como en el tablero del Lancer).
  */
@@ -33,6 +34,33 @@ class SpeedGaugeView @JvmOverloads constructor(
     private var shownSpeed = 0f
     private var animator: ValueAnimator? = null
     private var sweeping = false             // barrido de encendido en curso
+
+    /** Rumbo ("N", "NE"…); null = no se muestra (detenido o sin señal). */
+    var heading: String? = null
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+            }
+        }
+
+    /** Límite para la alerta (km/h); null = sin alerta. */
+    var speedLimit: Float? = null
+        set(value) {
+            field = value
+            updateAlert()
+            invalidate()
+        }
+
+    private var alerting = false
+    private var blinkOn = true
+    private val blink = object : Runnable {
+        override fun run() {
+            blinkOn = !blinkOn
+            invalidate()
+            postDelayed(this, 450)
+        }
+    }
 
     /** Velocidad máxima del viaje (km/h); null = no se muestra. */
     var tripMax: Float? = null
@@ -75,6 +103,11 @@ class SpeedGaugeView @JvmOverloads constructor(
         color = red
         typeface = Typeface.create("sans-serif", Typeface.BOLD)
     }
+    private val headingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        color = silver
+        typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+    }
     private val maxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
         color = silver
@@ -91,6 +124,7 @@ class SpeedGaugeView @JvmOverloads constructor(
     /** Cambia la velocidad (km/h). null = sin señal. */
     fun setSpeed(kmh: Float?) {
         targetSpeed = kmh
+        updateAlert()
         if (sweeping) return   // al terminar el barrido se va a esta velocidad
         val to = (kmh ?: 0f).coerceIn(0f, maxSpeed)
         animator?.cancel()
@@ -127,6 +161,7 @@ class SpeedGaugeView @JvmOverloads constructor(
 
                 override fun onAnimationEnd(animation: android.animation.Animator) {
                     sweeping = false
+                    updateAlert()
                     if (!cancelled) setSpeed(targetSpeed)
                 }
             })
@@ -141,7 +176,21 @@ class SpeedGaugeView @JvmOverloads constructor(
         setMeasuredDimension(if (w == 0) h else w, if (h == 0) w else h)
     }
 
+    /** Enciende o apaga el parpadeo según la velocidad real y el límite. */
+    private fun updateAlert() {
+        val limit = speedLimit
+        val speed = targetSpeed
+        val over = limit != null && speed != null && !sweeping && speed > limit
+        if (over == alerting) return
+        alerting = over
+        removeCallbacks(blink)
+        blinkOn = true
+        if (over) postDelayed(blink, 450)
+        invalidate()
+    }
+
     override fun onDetachedFromWindow() {
+        removeCallbacks(blink)
         animator?.cancel()
         super.onDetachedFromWindow()
     }
@@ -155,8 +204,10 @@ class SpeedGaugeView @JvmOverloads constructor(
         val stroke = size * 0.065f
         val radius = size / 2f - stroke * 1.4f
 
-        // Aro plateado exterior
-        ringPaint.strokeWidth = size * 0.012f
+        // Aro plateado exterior (rojo y más grueso, parpadeando, si se pasa el límite)
+        val alarm = alerting && blinkOn
+        ringPaint.color = if (alarm) red else silver
+        ringPaint.strokeWidth = size * if (alarm) 0.02f else 0.012f
         canvas.drawCircle(cx, cy, radius + stroke * 1.15f, ringPaint)
 
         oval.set(cx - radius, cy - radius, cx + radius, cy + radius)
@@ -166,6 +217,22 @@ class SpeedGaugeView @JvmOverloads constructor(
         arcPaint.color = track
         arcPaint.alpha = 255
         canvas.drawArc(oval, START, SWEEP, false, arcPaint)
+
+        // Marca blanca del límite de velocidad
+        speedLimit?.let { limit ->
+            if (limit in 0f..maxSpeed) {
+                val a = Math.toRadians((START + SWEEP * limit / maxSpeed).toDouble())
+                tickPaint.color = pearl
+                tickPaint.strokeWidth = size * 0.012f
+                val r1 = radius - stroke * 0.5f
+                val r2 = radius + stroke * 0.5f
+                canvas.drawLine(
+                    (cx + r1 * cos(a)).toFloat(), (cy + r1 * sin(a)).toFloat(),
+                    (cx + r2 * cos(a)).toFloat(), (cy + r2 * sin(a)).toFloat(),
+                    tickPaint
+                )
+            }
+        }
 
         // Avance rojo, con un "resplandor" más ancho y transparente detrás
         val sweep = SWEEP * (shownSpeed / maxSpeed)
@@ -203,8 +270,15 @@ class SpeedGaugeView @JvmOverloads constructor(
             }
         }
 
-        // Número central (con 3 cifras se achica para no tapar el 40 y el 160)
+        // Rumbo, arriba del número
+        heading?.let {
+            headingPaint.textSize = size * 0.06f
+            canvas.drawText(it, cx, cy - size * 0.15f, headingPaint)
+        }
+
+        // Número central (con 3 cifras se achica para no tapar el 40 y el 160; rojo si pasa el límite)
         val text = if (targetSpeed == null && !sweeping) "--" else shownSpeed.roundToInt().toString()
+        speedPaint.color = if (alerting) red else pearl
         speedPaint.textSize = size * if (text.length > 2) 0.19f else 0.25f
         canvas.drawText(text, cx, cy + size * 0.07f, speedPaint)
 
