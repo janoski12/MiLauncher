@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Buscar carátulas en internet cuando el Bluetooth no las envía -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Android 11+: poder ver las apps instaladas que se pueden abrir -->
     <queries>
         <intent>

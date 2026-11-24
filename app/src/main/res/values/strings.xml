@@ -6,6 +6,20 @@
     <!-- Año que aparece bajo la foto del auto -->
     <string name="car_year">2010</string>
     <string name="kmh">km/h</string>
+    <!-- Velocidad máxima del viaje, dentro del velocímetro -->
+    <string name="trip_max">MÁX  %1$d</string>
+    <!-- Alerta de velocidad (mantener presionado el velocímetro) -->
+    <string name="speed_limit_title">Avisar al pasar…</string>
+    <string name="speed_limit_off">Sin alerta</string>
+    <string name="speed_limit_kmh">%1$d km/h</string>
+    <!-- Computador de viaje -->
+    <string name="trip_distance_label">VIAJE</string>
+    <string name="trip_time_label">TIEMPO</string>
+    <!-- Saludo sobre la foto del auto: cambia el nombre aquí -->
+    <string name="driver_name">Alejandro</string>
+    <string name="greeting_morning">Buenos días, %1$s</string>
+    <string name="greeting_afternoon">Buenas tardes, %1$s</string>
+    <string name="greeting_night">Buenas noches, %1$s</string>
     <string name="gps_searching">Buscando GPS…</string>
     <string name="gps_ok">GPS conectado</string>
     <string name="gps_no_permission">Toca para permitir la ubicación</string>

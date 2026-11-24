@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -31,8 +32,11 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : Activity() {
 
@@ -46,6 +50,14 @@ class MainActivity : Activity() {
     private lateinit var musicHint: TextView
     private lateinit var btnPlay: ImageButton
     private lateinit var slotsContainer: LinearLayout
+    private lateinit var greeting: TextView
+    private lateinit var tripDistanceView: TextView
+    private lateinit var tripTimeView: TextView
+    private lateinit var musicBg: ImageView
+    private lateinit var musicProgressBox: View
+    private lateinit var musicProgress: ProgressBar
+    private lateinit var musicElapsed: TextView
+    private lateinit var musicRemaining: TextView
 
     private var apps: List<AppEntry> = emptyList()
     private var slotsVersion = -1   // versión de Apps con la que se dibujó la fila de abajo
@@ -56,6 +68,28 @@ class MainActivity : Activity() {
 
     // ---------- Logo al encender ----------
     private val splash by lazy { Splash(this) }
+    private lateinit var nightMode: NightMode
+
+    /** Cada minuto: modo noche, saludo y tiempo del viaje. */
+    private val minuteTicker = object : Runnable {
+        override fun run() {
+            nightMode.update()
+            updateGreeting()
+            updateTripUi()
+            handler.postDelayed(this, 60_000)
+        }
+    }
+
+    // ---------- Velocidad máxima del viaje ----------
+    private val generalPrefs by lazy { getSharedPreferences("general", Context.MODE_PRIVATE) }
+    private var tripMax = 0f
+    private var prevKmh = 0f   // lectura anterior, para ignorar saltos sueltos del GPS
+
+    // ---------- Computador de viaje (km y tiempo) ----------
+    private var tripMeters = 0f
+    private var tripStart = 0L          // System.currentTimeMillis() al encender la radio
+    private var lastTripLocation: Location? = null
+    private var savedTripMeters = 0f    // lo último guardado (para no escribir a cada segundo)
     private var resumed = false
     private var screenOnAt = 0L   // cuándo se encendió la pantalla (al volver del reposo con la llave)
 
@@ -87,12 +121,33 @@ class MainActivity : Activity() {
         musicHint = findViewById(R.id.musicHint)
         btnPlay = findViewById(R.id.btnPlay)
         slotsContainer = findViewById(R.id.slots)
+        greeting = findViewById(R.id.greeting)
+        tripDistanceView = findViewById(R.id.tripDistance)
+        tripTimeView = findViewById(R.id.tripTime)
+        musicBg = findViewById(R.id.musicBg)
+        musicProgressBox = findViewById(R.id.musicProgressBox)
+        musicProgress = findViewById(R.id.musicProgress)
+        musicElapsed = findViewById(R.id.musicElapsed)
+        musicRemaining = findViewById(R.id.musicRemaining)
+        // Recorta la carátula difuminada con las esquinas redondeadas de la tarjeta
+        findViewById<View>(R.id.musicCard).clipToOutline = true
 
         findViewById<LinearLayout>(R.id.infoCard).setOnClickListener { onInfoCardClicked() }
+        // Mantener presionado el velocímetro: elegir el límite de la alerta
+        gauge.setOnClickListener { onInfoCardClicked() }
+        gauge.setOnLongClickListener { showSpeedLimitPicker(); true }
         findViewById<View>(R.id.musicCard).setOnClickListener { onMusicCardClicked() }
         findViewById<ImageButton>(R.id.btnPrev).setOnClickListener { previous() }
         findViewById<ImageButton>(R.id.btnNext).setOnClickListener { next() }
         btnPlay.setOnClickListener { playPause() }
+
+        nightMode = NightMode(this)
+        tripMax = generalPrefs.getFloat("trip_max", 0f)
+        gauge.tripMax = tripMax
+        tripMeters = generalPrefs.getFloat("trip_meters", 0f)
+        savedTripMeters = tripMeters
+        tripStart = generalPrefs.getLong("trip_start", System.currentTimeMillis())
+        applySpeedLimit()
 
         showFirstRunHint()
 
@@ -107,7 +162,93 @@ class MainActivity : Activity() {
         } else {
             registerReceiver(screenReceiver, filter)
         }
-        if (Splash.isNewBoot(this)) splash.show()
+        if (Splash.isNewBoot(this)) onCarStarted()
+    }
+
+    /**
+     * La radio se encendió (arranque o al despertar con la llave): empieza un viaje nuevo,
+     * aparece el logo y, cuando se va, el velocímetro hace su barrido.
+     */
+    private fun onCarStarted() {
+        resetTrip()
+        splash.show()
+        if (splash.isShowing) splash.onHide = { gauge.sweep() } else gauge.sweep()
+    }
+
+    private fun resetTrip() {
+        tripMax = 0f
+        prevKmh = 0f
+        gauge.tripMax = tripMax
+        tripMeters = 0f
+        savedTripMeters = 0f
+        lastTripLocation = null
+        tripStart = System.currentTimeMillis()
+        generalPrefs.edit().putFloat("trip_max", 0f).putFloat("trip_meters", 0f)
+            .putLong("trip_start", tripStart).apply()
+        updateTripUi()
+    }
+
+    /** Suma la distancia entre lecturas buenas, solo en movimiento (detenido el GPS "camina" solo). */
+    private fun updateTripDistance(location: Location, kmh: Float) {
+        val good = !location.hasAccuracy() || location.accuracy <= 25f
+        if (!good) return
+        if (kmh < 3f) {
+            lastTripLocation = location
+            return
+        }
+        val last = lastTripLocation
+        if (last != null) {
+            val d = last.distanceTo(location)
+            // Más de 500 m entre dos lecturas seguidas es un salto del GPS, no un trayecto.
+            if (d < 500f) tripMeters += d
+        }
+        lastTripLocation = location
+        if (tripMeters - savedTripMeters >= 100f) {
+            savedTripMeters = tripMeters
+            generalPrefs.edit().putFloat("trip_meters", tripMeters).apply()
+        }
+        updateTripUi()
+    }
+
+    private fun updateTripUi() {
+        tripDistanceView.text = String.format(Locale("es", "CL"), "%.1f km", tripMeters / 1000f)
+        val minutes = ((System.currentTimeMillis() - tripStart) / 60_000L).coerceAtLeast(0L)
+        tripTimeView.text = String.format(Locale.US, "%d:%02d", minutes / 60, minutes % 60)
+    }
+
+    /** "Buenos días" de 5 a 12, "Buenas tardes" hasta las 20 y "Buenas noches" el resto. */
+    private fun updateGreeting() {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        val res = when (hour) {
+            in 5..11 -> R.string.greeting_morning
+            in 12..19 -> R.string.greeting_afternoon
+            else -> R.string.greeting_night
+        }
+        greeting.text = getString(res, getString(R.string.driver_name))
+    }
+
+    // ---------- Alerta de velocidad ----------
+
+    /** Límite guardado en km/h (0 = sin alerta). Por defecto 120. */
+    private fun applySpeedLimit() {
+        val limit = generalPrefs.getInt("speed_limit", DEFAULT_SPEED_LIMIT)
+        gauge.speedLimit = if (limit > 0) limit.toFloat() else null
+    }
+
+    private fun showSpeedLimitPicker() {
+        val options = intArrayOf(0, 60, 80, 100, 120)
+        val names = options.map {
+            if (it == 0) getString(R.string.speed_limit_off) else getString(R.string.speed_limit_kmh, it)
+        }.toTypedArray<CharSequence>()
+        val current = options.indexOf(generalPrefs.getInt("speed_limit", DEFAULT_SPEED_LIMIT))
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+            .setTitle(R.string.speed_limit_title)
+            .setSingleChoiceItems(names, current) { dialog, which ->
+                generalPrefs.edit().putInt("speed_limit", options[which]).apply()
+                applySpeedLimit()
+                dialog.dismiss()
+            }
+            .show()
     }
 
     override fun onDestroy() {
@@ -122,7 +263,7 @@ class MainActivity : Activity() {
     private fun showSplashIfPending() {
         if (screenOnAt != 0L && SystemClock.elapsedRealtime() - screenOnAt < 5000) {
             screenOnAt = 0L
-            splash.show()
+            onCarStarted()
         }
     }
 
@@ -130,6 +271,7 @@ class MainActivity : Activity() {
         super.onResume()
         resumed = true
         showSplashIfPending()
+        handler.post(minuteTicker)
         buildSlots()
         startGps()
         startMusic()
@@ -138,6 +280,8 @@ class MainActivity : Activity() {
     override fun onPause() {
         super.onPause()
         resumed = false
+        handler.removeCallbacks(minuteTicker)
+        handler.removeCallbacks(progressTicker)
         stopGps()
         stopMusic()
     }
@@ -328,9 +472,36 @@ class MainActivity : Activity() {
         // Bajo 2 km/h el GPS "baila"; se muestra 0.
         gauge.setSpeed(if (kmh < 2f) 0f else kmh)
         gpsStatus.setText(R.string.gps_ok)
+        updateTripMax(location, kmh)
+        updateTripDistance(location, kmh)
+        gauge.heading = if (location.hasBearing() && kmh >= 5f) compassPoint(location.bearing) else null
+        nightMode.setLocation(location.latitude, location.longitude)
+    }
+
+    /**
+     * Solo cuenta una velocidad si se repite en dos lecturas seguidas (se usa la menor de las dos)
+     * y la señal es buena: así un salto falso del GPS no deja marcado "180".
+     */
+    private fun updateTripMax(location: Location, kmh: Float) {
+        val goodSignal = !location.hasAccuracy() || location.accuracy <= 25f
+        val confirmed = if (goodSignal) minOf(kmh, prevKmh) else 0f
+        prevKmh = if (goodSignal) kmh else 0f
+        if (confirmed >= tripMax + 1f) {
+            tripMax = confirmed
+            gauge.tripMax = tripMax
+            generalPrefs.edit().putFloat("trip_max", tripMax).apply()
+        }
+    }
+
+    /** Grados (0 = norte) a punto cardinal en español: N, NE, E, SE, S, SO, O, NO. */
+    private fun compassPoint(bearing: Float): String {
+        val points = arrayOf("N", "NE", "E", "SE", "S", "SO", "O", "NO")
+        return points[(((bearing % 360f + 360f) % 360f + 22.5f) / 45f).toInt() % 8]
     }
 
     private fun showGpsSearching() {
+        prevKmh = 0f
+        gauge.heading = null
         gauge.setSpeed(null)
         gpsStatus.setText(R.string.gps_searching)
     }
@@ -448,9 +619,11 @@ class MainActivity : Activity() {
             musicApp.text = ""
             musicTitle.setText(R.string.music_nothing)
             musicArtist.text = ""
+            artKey = null
             showArtPlaceholder()
             btnPlay.setImageResource(R.drawable.ic_play)
             musicHint.setText(if (hasNotificationAccess()) R.string.music_hint_open else R.string.music_hint_access)
+            updateProgress()
             return
         }
 
@@ -468,22 +641,110 @@ class MainActivity : Activity() {
             ?: md?.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: md?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
         if (art != null) {
-            albumArt.setPadding(0, 0, 0, 0)
-            albumArt.scaleType = ImageView.ScaleType.CENTER_CROP
-            albumArt.setImageBitmap(art)
+            artKey = null
+            showArt(art)
         } else {
-            showArtPlaceholder()
+            // Sin imagen (típico del Bluetooth): se busca por enlace o en internet.
+            val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE)
+            val artist = md?.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: md?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
+            val key = "$title|$artist"
+            artKey = key
+            val known = artFinder.cached(key)
+            if (known != null) {
+                showArt(known)
+            } else {
+                showArtPlaceholder()
+                val uris = listOfNotNull(
+                    md?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
+                    md?.getString(MediaMetadata.METADATA_KEY_ART_URI),
+                    md?.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
+                ).filter { it.isNotBlank() }
+                artFinder.find(key, uris, title, artist) { found ->
+                    // Solo si sigue sonando la misma canción
+                    if (artKey == key) showArt(found)
+                }
+            }
         }
 
         btnPlay.setImageResource(if (isPlaying()) R.drawable.ic_pause else R.drawable.ic_play)
         musicHint.text = ""
+        updateProgress()
+    }
+
+    // ---------- Carátula, fondo difuminado y barra de progreso ----------
+
+    private val artFinder by lazy { ArtFinder(this) }
+    private var artKey: String? = null   // canción cuya carátula se está buscando
+
+    private fun showArt(art: Bitmap) {
+        albumArt.setPadding(0, 0, 0, 0)
+        albumArt.scaleType = ImageView.ScaleType.CENTER_CROP
+        albumArt.setImageBitmap(art)
+        setBlurredBackground(art)
+    }
+
+    private var blurredFrom: Bitmap? = null
+
+    /**
+     * Fondo de la tarjeta: la carátula achicada a unos pocos píxeles y vuelta a agrandar
+     * queda difuminada (barato en memoria, sin librerías).
+     */
+    private fun setBlurredBackground(art: Bitmap?) {
+        if (art === blurredFrom) return
+        blurredFrom = art
+        if (art == null || art.width <= 0 || art.height <= 0) {
+            musicBg.setImageDrawable(null)
+            return
+        }
+        try {
+            val small = Bitmap.createScaledBitmap(art, 12, (12 * art.height / art.width).coerceAtLeast(1), true)
+            val soft = Bitmap.createScaledBitmap(small, 96, (96 * small.height / small.width).coerceAtLeast(1), true)
+            if (small !== soft) small.recycle()
+            musicBg.setImageBitmap(soft)
+        } catch (e: Exception) {
+            musicBg.setImageDrawable(null)
+        }
+    }
+
+    /** Mientras suena, refresca la barra una vez por segundo. */
+    private val progressTicker = object : Runnable {
+        override fun run() = updateProgress()
+    }
+
+    private fun updateProgress() {
+        handler.removeCallbacks(progressTicker)
+        val c = controller
+        val state = c?.playbackState
+        val duration = c?.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+        if (state == null || duration <= 0L || state.position < 0L) {
+            musicProgressBox.visibility = View.INVISIBLE
+            return
+        }
+        var position = state.position
+        if (state.state == PlaybackState.STATE_PLAYING) {
+            val since = SystemClock.elapsedRealtime() - state.lastPositionUpdateTime
+            position += (since * state.playbackSpeed).toLong()
+        }
+        position = position.coerceIn(0L, duration)
+        musicProgressBox.visibility = View.VISIBLE
+        musicProgress.progress = (position * 1000 / duration).toInt()
+        musicElapsed.text = formatTime(position)
+        musicRemaining.text = "-" + formatTime(duration - position)
+        if (state.state == PlaybackState.STATE_PLAYING && resumed) handler.postDelayed(progressTicker, 1000)
+    }
+
+    private fun formatTime(ms: Long): String {
+        val total = ms / 1000
+        return String.format(Locale.US, "%d:%02d", total / 60, total % 60)
     }
 
     private fun showArtPlaceholder() {
-        val pad = (36 * resources.displayMetrics.density).toInt()
+        val pad = (26 * resources.displayMetrics.density).toInt()
         albumArt.setPadding(pad, pad, pad, pad)
         albumArt.scaleType = ImageView.ScaleType.CENTER_INSIDE
         albumArt.setImageResource(R.drawable.ic_music)
+        setBlurredBackground(null)
     }
 
     private fun playPause() {
@@ -535,5 +796,6 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_LOCATION = 10
+        private const val DEFAULT_SPEED_LIMIT = 120   // km/h; 0 = sin alerta
     }
 }
