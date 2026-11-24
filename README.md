@@ -18,6 +18,8 @@ Detalles del Lancer en la pantalla: una foto del auto entre el velocímetro y la
 
 **Música:** la carátula del álbum se ve difuminada de fondo, y una barra muestra cuánto lleva la canción y cuánto le falta (si la app de música lo informa).
 
+**Carátula con Bluetooth:** el Bluetooth de la radio normalmente no envía la carátula. Si no llega, el launcher la busca en internet (catálogo de iTunes) con el título y el artista, y la guarda para no volver a buscarla. Necesita internet en la radio (por ejemplo, el hotspot del teléfono). Para que el teléfono Android intente enviarla por Bluetooth: activa las *Opciones de desarrollador* (toca 7 veces *Número de compilación* en *Ajustes > Acerca del teléfono*), busca **Versión de AVRCP de Bluetooth**, elige **1.6** y vuelve a conectar el Bluetooth.
+
 **Saludo:** arriba del auto dice "Buenos días", "Buenas tardes" o "Buenas noches" con tu nombre.
 
 **Modo noche automático:** desde la puesta del sol hasta el amanecer, la pantalla se pone más tenue. La hora del sol se calcula con tu ubicación GPS (sin señal, usa la de Santiago).
@@ -121,6 +123,7 @@ Para cambiar el nombre sobre el reloj, edita `car_name` en `strings.xml`. Para c
 | Modo noche (qué tan oscuro, o desactivarlo) | `NIGHT_COLOR` y `ENABLED` en `NightMode.kt` |
 | Nombre del saludo | `driver_name` en `app/src/main/res/values/strings.xml` |
 | Límite de velocidad por defecto | `DEFAULT_SPEED_LIMIT` en `MainActivity.kt` |
+| Buscar carátulas en internet (o desactivarlo) | `ONLINE_LOOKUP` en `ArtFinder.kt` |
 | Duración del barrido del velocímetro | `SWEEP_MS` en `SpeedGaugeView.kt` |
 | Diamantes rojos | `res/drawable/ic_diamantes.xml` |
 

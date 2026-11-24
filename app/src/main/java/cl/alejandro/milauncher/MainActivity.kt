@@ -619,6 +619,7 @@ class MainActivity : Activity() {
             musicApp.text = ""
             musicTitle.setText(R.string.music_nothing)
             musicArtist.text = ""
+            artKey = null
             showArtPlaceholder()
             btnPlay.setImageResource(R.drawable.ic_play)
             musicHint.setText(if (hasNotificationAccess()) R.string.music_hint_open else R.string.music_hint_access)
@@ -640,12 +641,30 @@ class MainActivity : Activity() {
             ?: md?.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: md?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
         if (art != null) {
-            albumArt.setPadding(0, 0, 0, 0)
-            albumArt.scaleType = ImageView.ScaleType.CENTER_CROP
-            albumArt.setImageBitmap(art)
-            setBlurredBackground(art)
+            artKey = null
+            showArt(art)
         } else {
-            showArtPlaceholder()
+            // Sin imagen (típico del Bluetooth): se busca por enlace o en internet.
+            val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE)
+            val artist = md?.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: md?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
+            val key = "$title|$artist"
+            artKey = key
+            val known = artFinder.cached(key)
+            if (known != null) {
+                showArt(known)
+            } else {
+                showArtPlaceholder()
+                val uris = listOfNotNull(
+                    md?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
+                    md?.getString(MediaMetadata.METADATA_KEY_ART_URI),
+                    md?.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
+                ).filter { it.isNotBlank() }
+                artFinder.find(key, uris, title, artist) { found ->
+                    // Solo si sigue sonando la misma canción
+                    if (artKey == key) showArt(found)
+                }
+            }
         }
 
         btnPlay.setImageResource(if (isPlaying()) R.drawable.ic_pause else R.drawable.ic_play)
@@ -653,7 +672,17 @@ class MainActivity : Activity() {
         updateProgress()
     }
 
-    // ---------- Fondo difuminado y barra de progreso ----------
+    // ---------- Carátula, fondo difuminado y barra de progreso ----------
+
+    private val artFinder by lazy { ArtFinder(this) }
+    private var artKey: String? = null   // canción cuya carátula se está buscando
+
+    private fun showArt(art: Bitmap) {
+        albumArt.setPadding(0, 0, 0, 0)
+        albumArt.scaleType = ImageView.ScaleType.CENTER_CROP
+        albumArt.setImageBitmap(art)
+        setBlurredBackground(art)
+    }
 
     private var blurredFrom: Bitmap? = null
 
