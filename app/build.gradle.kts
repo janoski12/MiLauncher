@@ -30,8 +30,8 @@ android {
         // pero por dentro corren una versión más antigua.
         minSdk = 24
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.9"
+        versionCode = 11
+        versionName = "1.10"
     }
 
     signingConfigs {
@@ -72,7 +72,9 @@ android {
 }
 
 // Sin dependencias externas: solo el SDK de Android, para que sea liviano (la radio tiene 2 GB de RAM).
+// (junit solo se usa para las pruebas en el PC: no va dentro del APK).
 dependencies {
+    testImplementation("junit:junit:4.13.2")
 }
 
 /** Crea milauncher.jks y keystore.properties con una contraseña aleatoria. Se ejecuta una sola vez. */

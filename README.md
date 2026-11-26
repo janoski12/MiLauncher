@@ -10,7 +10,7 @@ Detalles del Lancer en la pantalla: una foto del auto entre el velocímetro y la
 
 **Velocidad máxima del viaje:** aparece como "MÁX" dentro del velocímetro y vuelve a cero cada vez que se enciende la radio. Ignora los saltos falsos del GPS.
 
-**Computador de viaje:** bajo la foto del auto se ven los kilómetros recorridos y el tiempo desde que se encendió la radio. También vuelven a cero al encenderla.
+**Computador de viaje:** bajo la foto del auto se ven los kilómetros recorridos y el tiempo desde que se encendió la radio. También vuelven a cero al encenderla. Siguen contando aunque tengas otra app en pantalla (Waze, CarPlay); si la radio no deja usar el GPS en segundo plano, al volver al launcher se suma el tramo en línea recta.
 
 **Brújula:** en movimiento, el rumbo (N, NE, E, SE, S, SO, O, NO) aparece arriba del número del velocímetro.
 

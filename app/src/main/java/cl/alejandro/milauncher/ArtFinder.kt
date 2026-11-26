@@ -119,34 +119,16 @@ class ArtFinder(context: Context) {
         val json = download("https://itunes.apple.com/search?term=$q&media=music&entity=song&limit=5&country=CL")
             ?: return null
         val results = JSONObject(String(json, Charsets.UTF_8)).optJSONArray("results") ?: return null
-        val wanted = normalize(mainArtist)
         for (i in 0 until results.length()) {
             val r = results.optJSONObject(i) ?: continue
-            val found = normalize(r.optString("artistName"))
             // El artista tiene que coincidir: mejor sin carátula que con la de otra canción.
-            if (found.contains(wanted) || wanted.contains(found)) {
+            if (sameArtist(mainArtist, r.optString("artistName"))) {
                 val art = r.optString("artworkUrl100")
                 if (art.isNotBlank()) return art.replace("100x100bb", "300x300bb")
             }
         }
         return null
     }
-
-    /** Quita lo que confunde la búsqueda: "(feat. …)", "[Remastered]", " - Live", "|"… */
-    private fun cleanTitle(t: String): String =
-        t.replace(Regex("[(\\[][^)\\]]*[)\\]]"), " ")
-            .replace(Regex("\\s-\\s.*$"), " ")
-            .replace("|", " ")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-
-    /** "Big One, FMK, Ke Personajes" → "Big One". */
-    private fun firstArtist(a: String): String =
-        a.split(",", "&", " feat", " ft.", " x ", ";").first().trim()
-
-    private fun normalize(s: String): String =
-        java.text.Normalizer.normalize(s.lowercase(Locale.ROOT), java.text.Normalizer.Form.NFD)
-            .replace(Regex("[^a-z0-9]"), "")
 
     // ---------- Utilidades ----------
 
@@ -199,5 +181,31 @@ class ArtFinder(context: Context) {
     companion object {
         const val ONLINE_LOOKUP = true
         private const val RETRY_MS = 5 * 60_000L
+
+        /** Quita lo que confunde la búsqueda: "(feat. …)", "[Remastered]", " - Live", "|"… */
+        internal fun cleanTitle(t: String): String =
+            t.replace(Regex("[(\\[][^)\\]]*[)\\]]"), " ")
+                .replace(Regex("\\s-\\s.*$"), " ")
+                .replace("|", " ")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+
+        /** "Big One, FMK, Ke Personajes" → "Big One". */
+        internal fun firstArtist(a: String): String =
+            a.split(",", "&", " feat", " ft.", " x ", ";").first().trim()
+
+        /**
+         * ¿Es el mismo artista? Uno puede contener al otro ("Bad Bunny" y "Bad Bunny & Drake").
+         * Un nombre que queda vacío al normalizar (por ejemplo, en coreano) no calza con nada.
+         */
+        internal fun sameArtist(wanted: String, found: String): Boolean {
+            val a = normalize(wanted)
+            val b = normalize(found)
+            return a.isNotEmpty() && b.isNotEmpty() && (a.contains(b) || b.contains(a))
+        }
+
+        internal fun normalize(s: String): String =
+            java.text.Normalizer.normalize(s.lowercase(Locale.ROOT), java.text.Normalizer.Form.NFD)
+                .replace(Regex("[^a-z0-9]"), "")
     }
 }
