@@ -14,6 +14,7 @@ import android.widget.GridView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 
 /** Cajón con todas las apps. Toque = abrir. Mantener presionado = info de la app (para desinstalar, permisos, etc.). */
 class AppsActivity : Activity() {
@@ -38,12 +39,17 @@ class AppsActivity : Activity() {
             finish()
         }
         grid.setOnItemLongClickListener { _, _, position, _ ->
-            startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:" + apps[position].component.packageName)
+            // Algunas radios no traen esa pantalla de Ajustes: sin el try, el launcher se cerraría.
+            try {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + apps[position].component.packageName)
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.cannot_open, Toast.LENGTH_SHORT).show()
+            }
             true
         }
     }

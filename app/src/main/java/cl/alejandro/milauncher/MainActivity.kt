@@ -80,15 +80,9 @@ class MainActivity : Activity() {
         }
     }
 
-    // ---------- Velocidad máxima del viaje ----------
+    // ---------- Computador de viaje (km, tiempo y velocidad máxima) ----------
     private val generalPrefs by lazy { getSharedPreferences("general", Context.MODE_PRIVATE) }
-    private var tripMax = 0f
-    private var prevKmh = 0f   // lectura anterior, para ignorar saltos sueltos del GPS
-
-    // ---------- Computador de viaje (km y tiempo) ----------
-    private var tripMeters = 0f
-    private var tripStart = 0L          // System.currentTimeMillis() al encender la radio
-    private var lastTripLocation: Location? = null
+    private val trip = TripComputer()
     private var savedTripMeters = 0f    // lo último guardado (para no escribir a cada segundo)
     private var resumed = false
     private var screenOnAt = 0L   // cuándo se encendió la pantalla (al volver del reposo con la llave)
@@ -97,6 +91,9 @@ class MainActivity : Activity() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_SCREEN_ON -> {
+                    // El viaje se reinicia aunque haya otra app en pantalla (Waze, CarPlay…);
+                    // el logo, en cambio, solo si el launcher se ve en los próximos segundos.
+                    resetTrip()
                     screenOnAt = SystemClock.elapsedRealtime()
                     if (resumed) showSplashIfPending()
                 }
@@ -142,11 +139,14 @@ class MainActivity : Activity() {
         btnPlay.setOnClickListener { playPause() }
 
         nightMode = NightMode(this)
-        tripMax = generalPrefs.getFloat("trip_max", 0f)
-        gauge.tripMax = tripMax
-        tripMeters = generalPrefs.getFloat("trip_meters", 0f)
-        savedTripMeters = tripMeters
-        tripStart = generalPrefs.getLong("trip_start", System.currentTimeMillis())
+        trip.restore(
+            meters = generalPrefs.getFloat("trip_meters", 0f),
+            maxKmh = generalPrefs.getFloat("trip_max", 0f),
+            startElapsed = generalPrefs.getLong("trip_start_elapsed", -1L),
+            nowElapsed = SystemClock.elapsedRealtime()
+        )
+        gauge.tripMax = trip.maxKmh
+        savedTripMeters = trip.meters
         applySpeedLimit()
 
         showFirstRunHint()
@@ -162,58 +162,37 @@ class MainActivity : Activity() {
         } else {
             registerReceiver(screenReceiver, filter)
         }
-        if (Splash.isNewBoot(this)) onCarStarted()
+        if (Splash.isNewBoot(this)) {
+            resetTrip()
+            showStartupAnimation()
+        }
     }
 
-    /**
-     * La radio se encendió (arranque o al despertar con la llave): empieza un viaje nuevo,
-     * aparece el logo y, cuando se va, el velocímetro hace su barrido.
-     */
-    private fun onCarStarted() {
-        resetTrip()
+    /** La radio se encendió (arranque o al despertar con la llave): logo y, cuando se va, barrido del velocímetro. */
+    private fun showStartupAnimation() {
         splash.show()
         if (splash.isShowing) splash.onHide = { gauge.sweep() } else gauge.sweep()
     }
 
+    /** Empieza un viaje nuevo (km, tiempo y máxima en cero). */
     private fun resetTrip() {
-        tripMax = 0f
-        prevKmh = 0f
-        gauge.tripMax = tripMax
-        tripMeters = 0f
+        trip.reset(SystemClock.elapsedRealtime())
+        gauge.tripMax = trip.maxKmh
         savedTripMeters = 0f
-        lastTripLocation = null
-        tripStart = System.currentTimeMillis()
         generalPrefs.edit().putFloat("trip_max", 0f).putFloat("trip_meters", 0f)
-            .putLong("trip_start", tripStart).apply()
+            .putLong("trip_start_elapsed", trip.startElapsed).remove("trip_start").apply()
         updateTripUi()
     }
 
-    /** Suma la distancia entre lecturas buenas, solo en movimiento (detenido el GPS "camina" solo). */
-    private fun updateTripDistance(location: Location, kmh: Float) {
-        val good = !location.hasAccuracy() || location.accuracy <= 25f
-        if (!good) return
-        if (kmh < 3f) {
-            lastTripLocation = location
-            return
-        }
-        val last = lastTripLocation
-        if (last != null) {
-            val d = last.distanceTo(location)
-            // Más de 500 m entre dos lecturas seguidas es un salto del GPS, no un trayecto.
-            if (d < 500f) tripMeters += d
-        }
-        lastTripLocation = location
-        if (tripMeters - savedTripMeters >= 100f) {
-            savedTripMeters = tripMeters
-            generalPrefs.edit().putFloat("trip_meters", tripMeters).apply()
-        }
-        updateTripUi()
+    private fun saveTripMeters() {
+        if (trip.meters == savedTripMeters) return
+        savedTripMeters = trip.meters
+        generalPrefs.edit().putFloat("trip_meters", trip.meters).apply()
     }
 
     private fun updateTripUi() {
-        tripDistanceView.text = String.format(Locale("es", "CL"), "%.1f km", tripMeters / 1000f)
-        val minutes = ((System.currentTimeMillis() - tripStart) / 60_000L).coerceAtLeast(0L)
-        tripTimeView.text = String.format(Locale.US, "%d:%02d", minutes / 60, minutes % 60)
+        tripDistanceView.text = String.format(Locale("es", "CL"), "%.1f km", trip.meters / 1000f)
+        tripTimeView.text = TripComputer.formatMinutes(trip.elapsedMinutes(SystemClock.elapsedRealtime()))
     }
 
     /** "Buenos días" de 5 a 12, "Buenas tardes" hasta las 20 y "Buenas noches" el resto. */
@@ -252,6 +231,8 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        stopGps()
+        saveTripMeters()
         try {
             unregisterReceiver(screenReceiver)
         } catch (e: Exception) {
@@ -263,7 +244,7 @@ class MainActivity : Activity() {
     private fun showSplashIfPending() {
         if (screenOnAt != 0L && SystemClock.elapsedRealtime() - screenOnAt < 5000) {
             screenOnAt = 0L
-            onCarStarted()
+            showStartupAnimation()
         }
     }
 
@@ -282,7 +263,10 @@ class MainActivity : Activity() {
         resumed = false
         handler.removeCallbacks(minuteTicker)
         handler.removeCallbacks(progressTicker)
-        stopGps()
+        // El GPS sigue andando con otra app en pantalla, para que cuenten los km y la máxima;
+        // solo se deja de actualizar la pantalla.
+        handler.removeCallbacks(gpsWatchdog)
+        saveTripMeters()
         stopMusic()
     }
 
@@ -424,7 +408,11 @@ class MainActivity : Activity() {
 
     @SuppressLint("MissingPermission")
     private fun startGps() {
-        if (listeningGps) return
+        if (listeningGps) {
+            handler.removeCallbacks(gpsWatchdog)
+            handler.post(gpsWatchdog)
+            return
+        }
         val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         locationManager = lm
 
@@ -469,38 +457,32 @@ class MainActivity : Activity() {
     private fun onLocation(location: Location) {
         lastFixTime = SystemClock.elapsedRealtime()
         val kmh = if (location.hasSpeed()) location.speed * 3.6f else 0f
+
+        // Computador de viaje: cuenta siempre, aunque haya otra app en pantalla.
+        val maxChanged = trip.onFix(
+            location.latitude, location.longitude,
+            if (location.hasAccuracy()) location.accuracy else null,
+            // Hora de llegada de la lectura (algunas radios entregan la hora del GPS en cero).
+            kmh, lastFixTime
+        )
+        if (maxChanged) {
+            gauge.tripMax = trip.maxKmh
+            generalPrefs.edit().putFloat("trip_max", trip.maxKmh).apply()
+        }
+        if (trip.meters - savedTripMeters >= 100f) saveTripMeters()
+        nightMode.setLocation(location.latitude, location.longitude)
+
+        // La pantalla solo se actualiza si se está viendo (ahorra trabajo a la radio).
+        if (!resumed) return
         // Bajo 2 km/h el GPS "baila"; se muestra 0.
         gauge.setSpeed(if (kmh < 2f) 0f else kmh)
         gpsStatus.setText(R.string.gps_ok)
-        updateTripMax(location, kmh)
-        updateTripDistance(location, kmh)
-        gauge.heading = if (location.hasBearing() && kmh >= 5f) compassPoint(location.bearing) else null
-        nightMode.setLocation(location.latitude, location.longitude)
-    }
-
-    /**
-     * Solo cuenta una velocidad si se repite en dos lecturas seguidas (se usa la menor de las dos)
-     * y la señal es buena: así un salto falso del GPS no deja marcado "180".
-     */
-    private fun updateTripMax(location: Location, kmh: Float) {
-        val goodSignal = !location.hasAccuracy() || location.accuracy <= 25f
-        val confirmed = if (goodSignal) minOf(kmh, prevKmh) else 0f
-        prevKmh = if (goodSignal) kmh else 0f
-        if (confirmed >= tripMax + 1f) {
-            tripMax = confirmed
-            gauge.tripMax = tripMax
-            generalPrefs.edit().putFloat("trip_max", tripMax).apply()
-        }
-    }
-
-    /** Grados (0 = norte) a punto cardinal en español: N, NE, E, SE, S, SO, O, NO. */
-    private fun compassPoint(bearing: Float): String {
-        val points = arrayOf("N", "NE", "E", "SE", "S", "SO", "O", "NO")
-        return points[(((bearing % 360f + 360f) % 360f + 22.5f) / 45f).toInt() % 8]
+        gauge.heading = if (location.hasBearing() && kmh >= 5f) TripComputer.compassPoint(location.bearing) else null
+        updateTripUi()
     }
 
     private fun showGpsSearching() {
-        prevKmh = 0f
+        trip.signalLost()
         gauge.heading = null
         gauge.setSpeed(null)
         gpsStatus.setText(R.string.gps_searching)

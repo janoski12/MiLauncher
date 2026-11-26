@@ -22,6 +22,8 @@ escribe los commits en español.
 - `AppsActivity.kt`: cajón con todas las apps.
 - `SwipeDetector.kt`: gesto de deslizar (derecha→izquierda abre el cajón; al revés lo cierra).
 - `Splash.kt`: logo de la marca (`res/drawable-nodpi/logo_marca.png`) al arrancar o despertar la radio.
+- `TripComputer.kt`: km, tiempo y máxima del viaje (sin Android, para poder probarlo). El tiempo usa
+  `SystemClock.elapsedRealtime()`, nunca la hora del día: la radio arranca con el reloj equivocado.
 - `MediaListenerService.kt`: servicio vacío para tener acceso a notificaciones (leer la canción).
 
 ## Compilar en una sesión en la nube
@@ -32,6 +34,10 @@ escribe los commits en español.
 2. `gradlew` no tiene permiso de ejecución en git: usa `bash ./gradlew assembleRelease`.
 3. El APK queda en `app/build/outputs/apk/release/app-release.apk`. Entrégalo al usuario como
    `MiLauncher.apk`.
+
+## Pruebas
+- `bash ./gradlew testReleaseUnitTest` (en `app/src/test`). junit es solo para las pruebas: no va en el APK.
+- Deja la lógica pura (sin `Context`, `Location`, etc.) en funciones o clases aparte para poder probarla.
 
 ## Firma del APK (importante)
 Android solo instala un APK encima del anterior si viene firmado con **la misma llave**.
